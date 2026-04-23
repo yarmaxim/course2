@@ -1,1 +1,680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>SkillPass MVP · Gravity UI</title>
+  <!-- Gravity UI styles -->
+  <link rel="stylesheet" href="https://esm.sh/@gravity-ui/uikit@6.29.0/styles/fonts.css">
+  <link rel="stylesheet" href="https://esm.sh/@gravity-ui/uikit@6.29.0/styles/styles.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--g-color-base-background); font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--g-color-line-generic); border-radius: 4px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.35s ease both; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
+  <!-- Import map for ESM -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "@gravity-ui/uikit": "https://esm.sh/@gravity-ui/uikit@6.29.0",
+        "@gravity-ui/icons": "https://esm.sh/@gravity-ui/icons@2.9.0"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import React, { useState, useEffect, useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import {
+      ThemeProvider,
+      configure,
+      Button,
+      Card,
+      Label,
+      Select,
+      TextInput,
+      Spin,
+      Tabs,
+      TabsItem,
+      Icon,
+      Container,
+      spacing,
+    } from '@gravity-ui/uikit';
+    import { Check, Xmark, Plus, CircleCheck } from '@gravity-ui/icons';
+
+    // Настройка Gravity UI – язык и тема
+    configure({ lang: 'ru' });
+
+    // ========================= DATA =========================
+    const SKILLS_DATA = [
+      { id: 1, label: "Python", value: 85, category: "Программирование" },
+      { id: 2, label: "Machine Learning", value: 72, category: "AI/ML" },
+      { id: 3, label: "SQL", value: 90, category: "Данные" },
+      { id: 4, label: "React", value: 65, category: "Фронтенд" },
+      { id: 5, label: "Docker", value: 78, category: "DevOps" },
+      { id: 6, label: "Управление проектами", value: 60, category: "Soft Skills" },
+      { id: 7, label: "Data Analysis", value: 88, category: "Данные" },
+      { id: 8, label: "Deep Learning", value: 55, category: "AI/ML" },
+    ];
+
+    const CERTS_DATA = [
+      { id: 1, name: "Яндекс Практикум: Python Developer", issuer: "Яндекс", date: "2024-03-15", expires: "2026-03-15", status: "active", badge: "🎓", selected: true },
+      { id: 2, name: "Google Cloud Professional", issuer: "Google", date: "2023-11-01", expires: "2025-11-01", status: "active", badge: "☁️", selected: true },
+      { id: 3, name: "AWS Solutions Architect", issuer: "Amazon", date: "2023-05-20", expires: "2025-05-20", status: "active", badge: "⚡", selected: false },
+      { id: 4, name: "Scrum Master Certified", issuer: "Scrum Alliance", date: "2022-08-10", expires: "2024-08-10", status: "revoked", badge: "♻️", selected: false },
+    ];
+
+    const TX_DATA = [
+      { id: "0x7f3a...9b2c", type: "credential_issued", entity: "Яндекс Практикум", date: "2024-03-15 14:32", action: "Выдан сертификат", status: "confirmed" },
+      { id: "0x4e1b...c7d8", type: "access_granted", entity: "Сбер HR Platform", date: "2024-02-28 09:15", action: "Доступ предоставлен", status: "confirmed" },
+      { id: "0x9c2f...e3a1", type: "credential_issued", entity: "Google", date: "2023-11-01 11:00", action: "Выдан сертификат", status: "confirmed" },
+      { id: "0x1d8e...f5b6", type: "access_revoked", entity: "TechCorp LLC", date: "2023-09-14 16:45", action: "Доступ отозван", status: "confirmed" },
+      { id: "0x5a7c...d2e9", type: "credential_issued", entity: "Amazon Web Services", date: "2023-05-20 10:22", action: "Выдан сертификат", status: "confirmed" },
+      { id: "0x3b9d...a8f0", type: "credential_revoked", entity: "Scrum Alliance", date: "2024-08-10 00:00", action: "Сертификат истёк", status: "confirmed" },
+    ];
+
+    const EMPLOYERS = [
+      { name: "Сбер HR Platform", since: "2024-02-28", status: "active", access: ["Резюме", "Python", "ML сертификаты"] },
+      { name: "Яндекс Найм", since: "2024-01-10", status: "active", access: ["Все сертификаты", "Полный профиль"] },
+      { name: "TechCorp LLC", since: "2023-07-01", status: "revoked", access: ["Базовые данные"] },
+    ];
+
+    const ONTOLOGIES = ["ESCO", "SkillsBase RU", "Профстандарт РФ"];
+    const PROFESSIONS = ["Data Scientist", "Backend Developer", "ML Engineer", "Аналитик данных", "DevOps Engineer"];
+
+    // ==================== SUB‑COMPONENTS ====================
+    const RadarChart = ({ skills, size = 320 }) => {
+      const cx = size / 2, cy = size / 2, r = size * 0.38;
+      const n = skills.length;
+      const angleStep = (2 * Math.PI) / n;
+      const getPoint = (i, val) => ({ x: cx + r * (val / 100) * Math.cos(i * angleStep - Math.PI / 2), y: cy + r * (val / 100) * Math.sin(i * angleStep - Math.PI / 2) });
+      const getLabelPoint = (i) => ({ x: cx + (r + 28) * Math.cos(i * angleStep - Math.PI / 2), y: cy + (r + 28) * Math.sin(i * angleStep - Math.PI / 2) });
+      const gridLevels = [0.25, 0.5, 0.75, 1.0];
+      const polygon = skills.map((s, i) => `${getPoint(i, s.value).x},${getPoint(i, s.value).y}`).join(" ");
+      return (
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: "visible" }}>
+          {gridLevels.map((lvl, idx) => (
+            <polygon key={`grid-${idx}`} points={skills.map((_, i) => `${cx + r * lvl * Math.cos(i * angleStep - Math.PI / 2)},${cy + r * lvl * Math.sin(i * angleStep - Math.PI / 2)}`).join(" ")} fill="none" stroke="var(--g-color-line-generic)" strokeWidth="1" />
+          ))}
+          {skills.map((_, i) => (
+            <line key={`axis-${i}`} x1={cx} y1={cy} x2={cx + r * Math.cos(i * angleStep - Math.PI / 2)} y2={cy + r * Math.sin(i * angleStep - Math.PI / 2)} stroke="var(--g-color-line-generic-hover)" strokeWidth="1" />
+          ))}
+          <polygon points={polygon} fill="var(--g-color-base-brand)" fillOpacity={0.15} stroke="var(--g-color-base-brand)" strokeWidth="2" strokeLinejoin="round" />
+          {skills.map((s, i) => (
+            <circle key={`dot-${i}`} cx={getPoint(i, s.value).x} cy={getPoint(i, s.value).y} r={4} fill="var(--g-color-base-brand)" />
+          ))}
+          {skills.map((s, i) => (
+            <text key={`label-${i}`} x={getLabelPoint(i).x} y={getLabelPoint(i).y} textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="var(--g-color-text-secondary)" fontFamily="sans-serif">{s.label}</text>
+          ))}
+        </svg>
+      );
+    };
+
+    const QRPlaceholder = ({ size = 120 }) => {
+      const cells = [];
+      const seed = 42;
+      for (let i = 0; i < 21; i++) for (let j = 0; j < 21; j++) {
+        const corner = (i < 7 && j < 7) || (i < 7 && j > 13) || (i > 13 && j < 7);
+        const dark = corner ? ((i === 0 || i === 6 || j === 0 || j === 6 || (i > 1 && i < 5 && j > 1 && j < 5))) : ((i * 13 + j * 7 + seed) % 3 !== 0);
+        if (dark) cells.push({ i, j });
+      }
+      const cell = size / 21;
+      return (
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <rect width={size} height={size} fill="white" rx="8" />
+          {cells.map(({ i, j }) => <rect key={`${i}-${j}`} x={j * cell + 1} y={i * cell + 1} width={cell - 1} height={cell - 1} fill="var(--g-color-base-background)" />)}
+        </svg>
+      );
+    };
+
+    // ===================== STEPS ============================
+    // Шаг 1 – Регистрация
+    const Step1 = ({ onNext }) => {
+      const [method, setMethod] = useState(null);
+      const [loading, setLoading] = useState(false);
+
+      const providers = [
+        { id: "yandex", name: "Яндекс ID", icon: "Я", color: "#FC3F1D" },
+        { id: "google", name: "Google", icon: "G", color: "#4285F4" },
+        { id: "sber", name: "Сбер ID", icon: "С", color: "#21A038" },
+        { id: "tbank", name: "Т-Банк ID", icon: "Т", color: "#FFDD2D", textColor: "#333" },
+        { id: "wallet", name: "Web3 кошелёк", icon: "⬡", color: "var(--g-color-base-brand)", textColor: "#fff" },
+      ];
+
+      const handleAuth = (id) => {
+        setMethod(id);
+        setLoading(true);
+        setTimeout(() => { setLoading(false); onNext(); }, 1800);
+      };
+
+      return (
+        <Container maxWidth="s" style={{ margin: "0 auto", paddingTop: spacing(4) }}>
+          <div style={{ textAlign: "center", marginBottom: spacing(6) }}>
+            <div style={{ fontSize: 48, marginBottom: spacing(2) }}>🔐</div>
+            <h2 style={{ color: "var(--g-color-text-primary)", fontSize: 26, fontWeight: 700, margin: 0 }}>Добро пожаловать в SkillPass</h2>
+            <p style={{ color: "var(--g-color-text-secondary)", fontSize: 15, lineHeight: 1.6, margin: 0 }}>
+              Ваш цифровой паспорт компетенций на основе блокчейна. Выберите способ входа.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {providers.map(p => (
+              <button key={p.id} onClick={() => handleAuth(p.id)} disabled={loading}
+                style={{
+                  display: "flex", alignItems: "center", gap: 14,
+                  background: method === p.id ? "var(--g-color-base-brand-light)" : "var(--g-color-base-generic)",
+                  border: `1px solid ${method === p.id ? "var(--g-color-base-brand)" : "var(--g-color-line-generic)"}`,
+                  borderRadius: 12, padding: "14px 18px", cursor: "pointer",
+                  color: "var(--g-color-text-primary)", fontFamily: "inherit", fontSize: 15,
+                  transition: "all 0.2s", opacity: loading && method !== p.id ? 0.5 : 1,
+                }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10, background: p.color,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: p.id === "wallet" ? 20 : 16, fontWeight: 700,
+                  color: p.textColor || "#fff", flexShrink: 0,
+                }}>{p.icon}</div>
+                <span style={{ fontWeight: 500 }}>{p.name}</span>
+                {loading && method === p.id && <Spin size="s" style={{ marginLeft: "auto" }} />}
+                {!loading && <span style={{ marginLeft: "auto", color: "var(--g-color-text-hint)" }}>→</span>}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ textAlign: "center", color: "var(--g-color-text-hint)", fontSize: 12, marginTop: 24 }}>
+            Нажимая «Войти», вы принимаете <span style={{ color: "var(--g-color-base-brand)" }}>условия использования</span> и <span style={{ color: "var(--g-color-base-brand)" }}>политику конфиденциальности</span>
+          </p>
+        </Container>
+      );
+    };
+
+    // Шаг 2 – Кабинет
+    const Step2 = ({ onGoTo }) => {
+      const tiles = [
+        { id: 3, icon: "📋", title: "Управлять компетенциями", sub: "Дипломы, сертификаты, навыки", color: "var(--g-color-base-brand)" },
+        { id: 4, icon: "🕸️", title: "Профиль компетенций", sub: "Визуализация навыков", color: "var(--g-color-base-positive)" },
+        { id: 5, icon: "🔗", title: "Профиль для работодателя", sub: "QR-код и ссылка", color: "var(--g-color-base-warning)" },
+        { id: 6, icon: "🔒", title: "Управление доступом", sub: "Блокчейн-транзакции", color: "var(--g-color-base-danger)" },
+      ];
+
+      return (
+        <Container maxWidth="m" style={{ margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: spacing(6) }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--g-color-base-brand-light)", border: `2px solid var(--g-color-base-brand)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
+            <div>
+              <div style={{ color: "var(--g-color-text-primary)", fontWeight: 600, fontSize: 18 }}>Алексей Громов</div>
+              <div style={{ color: "var(--g-color-text-secondary)", fontSize: 13 }}>alexey.gromov@yandex.ru · DID: did:web3:0x4f2a...7c1b</div>
+            </div>
+            <div style={{ marginLeft: "auto" }}>
+              <Label theme="success" size="m">✓ Верифицирован</Label>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+            {tiles.map(t => (
+              <Card key={t.id} onClick={() => onGoTo(t.id)} style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}>
+                <div style={{ position: "absolute", top: -20, right: -20, fontSize: 72, opacity: 0.05 }}>{t.icon}</div>
+                <div style={{ fontSize: 28, marginBottom: 10 }}>{t.icon}</div>
+                <div style={{ color: "var(--g-color-text-primary)", fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{t.title}</div>
+                <div style={{ color: "var(--g-color-text-secondary)", fontSize: 13 }}>{t.sub}</div>
+                <div style={{ marginTop: 14, width: 32, height: 2, background: t.color, borderRadius: 2 }} />
+              </Card>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+            {[
+              { label: "Сертификатов", val: "4", color: "var(--g-color-base-brand)" },
+              { label: "Навыков", val: "8", color: "var(--g-color-base-positive)" },
+              { label: "Запросов от HR", val: "3", color: "var(--g-color-base-warning)" },
+            ].map(m => (
+              <Card key={m.label}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: m.color }}>{m.val}</div>
+                <div style={{ fontSize: 12, color: "var(--g-color-text-secondary)", marginTop: 2 }}>{m.label}</div>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      );
+    };
+
+    // Шаг 3 – Загрузка компетенций
+    const Step3 = ({ onNext }) => {
+      const [certs, setCerts] = useState(CERTS_DATA.slice(0, 2));
+      const [dragging, setDragging] = useState(false);
+      const [skillInput, setSkillInput] = useState("");
+      const [skills, setSkills] = useState(["Python", "Machine Learning", "SQL"]);
+      const [uploading, setUploading] = useState(false);
+      const [uploaded, setUploaded] = useState(false);
+
+      const handleAddSkill = () => {
+        if (skillInput.trim() && !skills.includes(skillInput.trim())) {
+          setSkills([...skills, skillInput.trim()]);
+          setSkillInput("");
+        }
+      };
+
+      const handleUpload = () => {
+        setUploading(true);
+        setTimeout(() => { setUploading(false); setUploaded(true); setTimeout(onNext, 1000); }, 2000);
+      };
+
+      return (
+        <Container maxWidth="m" style={{ margin: "0 auto" }}>
+          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Загрузка компетенций</h3>
+          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 24 }}>Добавьте сертификаты, дипломы и укажите навыки</p>
+
+          <div
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={e => { e.preventDefault(); setDragging(false); }}
+            style={{
+              border: `2px dashed ${dragging ? "var(--g-color-base-brand)" : "var(--g-color-line-generic)"}`,
+              borderRadius: 14, padding: "30px 20px", textAlign: "center",
+              background: dragging ? "var(--g-color-base-brand-light)" : "var(--g-color-base-generic)",
+              cursor: "pointer", marginBottom: 20, transition: "all 0.2s",
+            }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>📤</div>
+            <div style={{ color: "var(--g-color-text-primary)", fontWeight: 500, marginBottom: 4 }}>Перетащите файлы или нажмите для выбора</div>
+            <div style={{ color: "var(--g-color-text-secondary)", fontSize: 13 }}>PDF, JPEG, PNG · Сертификаты, дипломы, бейджи</div>
+            <Button view="flat" size="s" style={{ marginTop: 14 }}>Выбрать файлы</Button>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Добавленные документы</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CERTS_DATA.map(c => (
+                <Card key={c.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 22 }}>{c.badge}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 500 }}>{c.name}</div>
+                      <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12 }}>{c.issuer} · {c.date}</div>
+                    </div>
+                    <Label theme={c.status === "active" ? "success" : "danger"}>{c.status === "active" ? "Активен" : "Отозван"}</Label>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Навыки</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              {skills.map(s => (
+                <Label key={s} theme="info" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {s}
+                  <Icon data={Xmark} size={12} style={{ cursor: "pointer", opacity: 0.6 }} onClick={() => setSkills(skills.filter(x => x !== s))} />
+                </Label>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <TextInput value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddSkill()} placeholder="Добавить навык..." style={{ flex: 1 }} />
+              <Button view="outlined" onClick={handleAddSkill}><Icon data={Plus} /></Button>
+            </div>
+          </div>
+
+          <Button view="action" size="l" onClick={handleUpload} disabled={uploading || uploaded} width="max">
+            {uploaded ? <><Icon data={CircleCheck} /> Сохранено</> : uploading ? <><Spin size="s" /> Сохранение...</> : "Сохранить компетенции →"}
+          </Button>
+        </Container>
+      );
+    };
+
+    // Шаг 4 – Профиль компетенций
+    const Step4 = ({ onNext }) => {
+      const [ontology, setOntology] = useState(ONTOLOGIES[0]);
+      const [profession, setProfession] = useState("");
+
+      const filtered = profession
+        ? SKILLS_DATA.filter(s => {
+          if (profession === "Data Scientist") return ["Программирование", "AI/ML", "Данные"].includes(s.category);
+          if (profession === "Backend Developer") return ["Программирование", "DevOps", "Данные"].includes(s.category);
+          return true;
+        })
+        : SKILLS_DATA;
+
+      const categories = [...new Set(SKILLS_DATA.map(s => s.category))];
+      const catColors = { "Программирование": "var(--g-color-base-brand)", "AI/ML": "var(--g-color-base-positive)", "Данные": "var(--g-color-base-warning)", "Фронтенд": "#C678DD", "DevOps": "var(--g-color-base-misc)", "Soft Skills": "var(--g-color-base-danger)" };
+
+      return (
+        <Container maxWidth="m" style={{ margin: "0 auto" }}>
+          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Профиль компетенций</h3>
+          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 20 }}>Визуализация ваших навыков на основе онтологий</p>
+
+          <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label style={{ color: "var(--g-color-text-secondary)", fontSize: 12, display: "block", marginBottom: 6 }}>Онтология</label>
+              <Select value={[ontology]} onUpdate={(vals) => setOntology(vals[0])} options={ONTOLOGIES.map(o => ({ value: o, content: o }))} />
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label style={{ color: "var(--g-color-text-secondary)", fontSize: 12, display: "block", marginBottom: 6 }}>Фильтр по профессии</label>
+              <Select value={profession ? [profession] : []} onUpdate={(vals) => setProfession(vals[0] || "")} options={[{ value: "", content: "Все профессии" }, ...PROFESSIONS.map(p => ({ value: p, content: p }))]} />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+            <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 10px" }}>
+              <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, marginBottom: 12, letterSpacing: 1 }}>ПАУТИНА НАВЫКОВ</div>
+              <RadarChart skills={filtered} size={260} />
+            </Card>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {filtered.map(s => (
+                <Card key={s.id} style={{ padding: "12px 14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
+                    <span style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 500 }}>{s.label}</span>
+                    <span style={{ color: catColors[s.category], fontSize: 12, fontWeight: 600 }}>{s.value}%</span>
+                  </div>
+                  <div style={{ height: 5, background: "var(--g-color-base-generic)", borderRadius: 4 }}>
+                    <div style={{ height: "100%", width: `${s.value}%`, background: catColors[s.category], borderRadius: 4, transition: "width 0.5s" }} />
+                  </div>
+                  <span style={{ color: "var(--g-color-text-hint)", fontSize: 11, marginTop: 4, display: "block" }}>{s.category}</span>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+            {categories.map(c => (
+              <span key={c} style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--g-color-text-secondary)", fontSize: 12 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: catColors[c], display: "inline-block" }} />{c}
+              </span>
+            ))}
+          </div>
+
+          <Button view="action" size="l" onClick={onNext} width="max" style={{ marginTop: 24 }}>
+            Создать профиль для работодателя →
+          </Button>
+        </Container>
+      );
+    };
+
+    // Шаг 5 – Профиль для работодателя
+    const Step5 = ({ onNext }) => {
+      const [selected, setSelected] = useState({ certs: [1, 2], skills: [1, 2, 3, 7] });
+      const [generated, setGenerated] = useState(false);
+      const [link] = useState("https://skillpass.ru/p/alexey-gromov-xK9mP2");
+
+      const toggle = (type, id) => {
+        setGenerated(false);
+        setSelected(prev => ({
+          ...prev,
+          [type]: prev[type].includes(id) ? prev[type].filter(x => x !== id) : [...prev[type], id],
+        }));
+      };
+
+      return (
+        <Container maxWidth="m" style={{ margin: "0 auto" }}>
+          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Профиль для работодателя</h3>
+          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 24 }}>Выберите данные, которые хотите показать, и получите ссылку или QR-код</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+            {[1, 2].map(section => (
+              <div key={section === 1 ? "certs" : "skills"}>
+                <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>{section === 1 ? "Сертификаты" : "Навыки"}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {(section === 1 ? CERTS_DATA.filter(c => c.status === "active") : SKILLS_DATA).map(item => (
+                    <Card key={item.id} onClick={() => toggle(section === 1 ? "certs" : "skills", item.id)} style={{ cursor: "pointer" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: section === 1 ? 20 : 14 }}>{section === 1 ? item.badge : "✨"}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: "var(--g-color-text-primary)", fontSize: 13, fontWeight: 500 }}>{section === 1 ? item.name : item.label}</div>
+                          <div style={{ color: "var(--g-color-text-secondary)", fontSize: 11 }}>{section === 1 ? item.issuer : `${item.category} · ${item.value}%`}</div>
+                        </div>
+                        <div style={{
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: selected[section === 1 ? "certs" : "skills"].includes(item.id) ? "var(--g-color-base-brand)" : "transparent",
+                          border: `2px solid ${selected[section === 1 ? "certs" : "skills"].includes(item.id) ? "var(--g-color-base-brand)" : "var(--g-color-line-generic)"}`,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff",
+                        }}>{selected[section === 1 ? "certs" : "skills"].includes(item.id) ? "✓" : ""}</div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button view="action" size="l" onClick={() => setGenerated(true)} width="max" style={{ marginBottom: 20 }}>
+            ✨ Сгенерировать ссылку и QR-код
+          </Button>
+
+          {generated && (
+            <Card>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center" }}>
+                <div>
+                  <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, marginBottom: 8 }}>Ваша персональная ссылка</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--g-color-base-generic)", borderRadius: 8, padding: "10px 12px", border: "1px solid var(--g-color-line-generic)" }}>
+                    <span style={{ color: "var(--g-color-base-brand)", fontSize: 13, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link}</span>
+                    <Button view="flat" size="s">Копировать</Button>
+                  </div>
+                  <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, width: "100%", marginBottom: 4 }}>Включено:</div>
+                    {selected.certs.map(id => CERTS_DATA.find(c => c.id === id)).filter(Boolean).map(c => (
+                      <Label key={c.id} theme="brand">{c.badge} {c.issuer}</Label>
+                    ))}
+                    {selected.skills.map(id => SKILLS_DATA.find(s => s.id === id)).filter(Boolean).map(s => (
+                      <Label key={s.id} theme="success">{s.label}</Label>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <QRPlaceholder size={110} />
+                  <div style={{ color: "var(--g-color-text-hint)", fontSize: 11, marginTop: 6 }}>QR-код</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--g-color-base-positive-light)", borderRadius: 10, border: "1px solid var(--g-color-base-positive)" }}>
+                <div style={{ color: "var(--g-color-base-positive)", fontSize: 13, fontWeight: 500 }}>🔒 Данные защищены блокчейном</div>
+                <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12, marginTop: 3 }}>Работодатель увидит только выбранные вами данные. Вы можете отозвать доступ в любой момент.</div>
+              </div>
+            </Card>
+          )}
+
+          <Button view="outlined" size="l" onClick={onNext} width="max" style={{ marginTop: 16 }}>
+            Управление доступом и отзыв →
+          </Button>
+        </Container>
+      );
+    };
+
+    // Шаг 6 – Управление и блокчейн
+    const Step6 = () => {
+      const [tab, setTab] = useState("tx");
+      const [revoking, setRevoking] = useState(null);
+
+      const handleRevoke = (name) => {
+        setRevoking(name);
+        setTimeout(() => setRevoking(null), 1500);
+      };
+
+      const txColor = (type) => {
+        if (type === "credential_issued") return "var(--g-color-base-positive)";
+        if (type === "access_granted") return "var(--g-color-base-brand)";
+        if (type === "access_revoked") return "var(--g-color-base-danger)";
+        if (type === "credential_revoked") return "var(--g-color-base-warning)";
+        return "var(--g-color-text-hint)";
+      };
+
+      const txIcon = (type) => {
+        if (type === "credential_issued") return "🎓";
+        if (type === "access_granted") return "🔓";
+        if (type === "access_revoked") return "🚫";
+        if (type === "credential_revoked") return "⚠️";
+        return "📋";
+      };
+
+      return (
+        <Container maxWidth="m" style={{ margin: "0 auto" }}>
+          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Управление и отзыв</h3>
+          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 20 }}>История блокчейн-транзакций, доступ работодателей и статус сертификатов</p>
+
+          <Tabs activeTab={tab} onSelectTab={(id) => setTab(id)} style={{ marginBottom: 24 }}>
+            <TabsItem id="tx" title="📊 Транзакции" />
+            <TabsItem id="employers" title="🏢 Работодатели" />
+            <TabsItem id="certs" title="🎓 Сертификаты" />
+          </Tabs>
+
+          {tab === "tx" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {TX_DATA.map(tx => (
+                <Card key={tx.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 22 }}>{txIcon(tx.type)}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 500 }}>{tx.action}</div>
+                        <Label theme={tx.status === "confirmed" ? "success" : "warning"}>{tx.status === "confirmed" ? "✓" : "..."}</Label>
+                      </div>
+                      <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12, marginTop: 2 }}>{tx.entity} · {tx.date}</div>
+                      <div style={{ color: "var(--g-color-text-hint)", fontSize: 11, fontFamily: "monospace", marginTop: 3 }}>{tx.id}</div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {tab === "employers" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {EMPLOYERS.map(e => (
+                <Card key={e.name}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 8, background: "var(--g-color-base-generic)", border: "1px solid var(--g-color-line-generic)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏢</div>
+                        <div>
+                          <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 600 }}>{e.name}</div>
+                          <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12 }}>С {e.since}</div>
+                        </div>
+                        <Label theme={e.status === "active" ? "success" : "danger"}>{e.status === "active" ? "Активен" : "Отозван"}</Label>
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {e.access.map(a => <Label key={a} theme="brand">{a}</Label>)}
+                      </div>
+                    </div>
+                    {e.status === "active" && (
+                      <Button view="outlined-danger" size="s" onClick={() => handleRevoke(e.name)} disabled={revoking === e.name}>
+                        {revoking === e.name ? <Spin size="xs" /> : "Отозвать"}
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {tab === "certs" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {CERTS_DATA.map(c => (
+                <Card key={c.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 28 }}>{c.badge}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 600 }}>{c.name}</div>
+                      <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12, marginTop: 2 }}>Выдан: {c.issuer} · {c.date}</div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
+                        <Label theme={c.status === "active" ? "success" : "danger"}>{c.status === "active" ? "✓ Активен" : "✗ Отозван"}</Label>
+                        <span style={{ color: "var(--g-color-text-hint)", fontSize: 12 }}>До: {c.expires}</span>
+                        {new Date(c.expires) < new Date() && c.status === "active" && (
+                          <Label theme="warning">⚠ Истёк</Label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Container>
+      );
+    };
+
+    // ===================== MAIN APP =========================
+    const App = () => {
+      const [step, setStep] = useState(1);
+      const [animIn, setAnimIn] = useState(true);
+      const contentRef = useRef(null);
+
+      const goTo = (s) => {
+        setAnimIn(false);
+        setTimeout(() => {
+          setStep(s);
+          setAnimIn(true);
+          if (contentRef.current) contentRef.current.scrollTop = 0;
+        }, 200);
+      };
+
+      const navItems = step >= 2 ? [
+        { id: 2, label: "Кабинет", icon: "⊡" },
+        { id: 3, label: "Компетенции", icon: "📋" },
+        { id: 4, label: "Профиль", icon: "🕸" },
+        { id: 5, label: "Для HR", icon: "🔗" },
+        { id: 6, label: "Доступы", icon: "🔒" },
+      ] : [];
+
+      return (
+        <ThemeProvider theme="dark">
+          <div style={{ minHeight: "100vh", background: "var(--g-color-base-background)", fontFamily: "'SF Pro Display', 'Segoe UI', system-ui, sans-serif", color: "var(--g-color-text-primary)" }}>
+            {/* Header */}
+            <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(13,17,25,0.88)", backdropFilter: "blur(16px)", borderBottom: "1px solid var(--g-color-line-generic)" }}>
+              <Container maxWidth="l" style={{ padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 58 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--g-color-base-brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff" }}>⬡</div>
+                  <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: -0.3 }}>SkillPass</span>
+                  <Label theme="brand">MVP</Label>
+                </div>
+
+                {step >= 2 && (
+                  <Tabs activeTab={String(step)} onSelectTab={(id) => goTo(Number(id))} size="s">
+                    {navItems.map(n => (
+                      <TabsItem key={n.id} id={String(n.id)} title={<span>{n.icon} {n.label}</span>} />
+                    ))}
+                  </Tabs>
+                )}
+
+                {step >= 2 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--g-color-base-brand-light)", border: "1.5px solid var(--g-color-base-brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>А</div>
+                    <span style={{ fontSize: 13, color: "var(--g-color-text-secondary)" }}>Алексей</span>
+                  </div>
+                )}
+              </Container>
+            </div>
+
+            {/* Content */}
+            <div ref={contentRef} style={{ padding: "32px 20px 60px", maxWidth: 900, margin: "0 auto" }}>
+              <div className={animIn ? "fade-in" : ""} style={{ opacity: animIn ? 1 : 0, transition: "opacity 0.2s" }}>
+                {step === 1 && <Step1 onNext={() => goTo(2)} />}
+                {step === 2 && <Step2 onGoTo={goTo} />}
+                {step === 3 && <Step3 onNext={() => goTo(4)} />}
+                {step === 4 && <Step4 onNext={() => goTo(5)} />}
+                {step === 5 && <Step5 onNext={() => goTo(6)} />}
+                {step === 6 && <Step6 />}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ borderTop: "1px solid var(--g-color-line-generic)", padding: "16px 20px", textAlign: "center" }}>
+              <span style={{ color: "var(--g-color-text-hint)", fontSize: 12 }}>SkillPass · Цифровой паспорт компетенций · Powered by Blockchain · 2025</span>
+            </div>
+          </div>
+        </ThemeProvider>
+      );
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
