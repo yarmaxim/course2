@@ -1,680 +1,2720 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>SkillPass MVP · Gravity UI</title>
-  <!-- Gravity UI styles -->
-  <link rel="stylesheet" href="https://esm.sh/@gravity-ui/uikit@6.29.0/styles/fonts.css">
-  <link rel="stylesheet" href="https://esm.sh/@gravity-ui/uikit@6.29.0/styles/styles.css">
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--g-color-base-background); font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--g-color-line-generic); border-radius: 4px; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in { animation: fadeIn 0.35s ease both; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SkillChain — Blockchain-верифицированные компетенции</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* === Gravity UI inspired tokens — Light Blue theme === */
+:root {
+  --g-bg: #f7f9fc;
+  --g-bg-2: #ffffff;
+  --g-bg-3: #f1f5fb;
+  --g-bg-4: #e6edf7;
+  --g-border: #e3e9f2;
+  --g-border-hover: #c8d3e5;
+  --g-text: #0f1826;
+  --g-text-secondary: #4a5670;
+  --g-text-hint: #8694ab;
+  --g-brand: #2b5fff;           /* Primary blue */
+  --g-brand-hover: #1f4ee0;
+  --g-brand-dark: #0a3cd1;
+  --g-brand-soft: rgba(43, 95, 255, 0.08);
+  --g-brand-softer: rgba(43, 95, 255, 0.04);
+  --g-info: #0095ff;
+  --g-info-soft: rgba(0, 149, 255, 0.08);
+  --g-success: #10b981;
+  --g-success-soft: rgba(16, 185, 129, 0.08);
+  --g-danger: #ef4444;
+  --g-danger-soft: rgba(239, 68, 68, 0.08);
+  --g-purple: #6366f1;
+  --g-purple-soft: rgba(99, 102, 241, 0.08);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-1: 0 1px 2px rgba(15, 24, 38, .04), 0 2px 8px rgba(15, 24, 38, .04);
+  --shadow-2: 0 4px 16px rgba(15, 24, 38, .06), 0 16px 40px rgba(43, 95, 255, .08);
+  --shadow-3: 0 24px 60px rgba(43, 95, 255, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Manrope', -apple-system, sans-serif;
+  background: var(--g-bg);
+  color: var(--g-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(43, 95, 255, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(0, 149, 255, 0.08), transparent 60%),
+    radial-gradient(800px 600px at 50% 110%, rgba(99, 102, 241, 0.06), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dot grid overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(43, 95, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+/* === Top bar === */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--g-border);
+}
+.topbar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 800; font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.brand-logo {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--g-brand), var(--g-info));
+  display: grid; place-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; font-size: 14px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(43, 95, 255, 0.35);
+  letter-spacing: -0.02em;
+}
+.brand-name { color: var(--g-text); }
+.brand-tag {
+  font-size: 11px;
+  color: var(--g-text-hint);
+  font-weight: 500;
+  padding: 3px 8px;
+  background: var(--g-bg-3);
+  border-radius: 4px;
+  margin-left: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+
+.user-pill {
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 6px 10px 6px 6px;
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--g-text);
+  transition: all .2s ease;
+  box-shadow: var(--shadow-1);
+}
+.user-pill:hover {
+  border-color: var(--g-brand);
+  box-shadow: 0 2px 8px rgba(43, 95, 255, 0.15);
+  transform: translateY(-1px);
+}
+.user-pill:hover .user-pill-arrow { transform: translateX(2px); color: var(--g-brand); }
+.user-pill:active { transform: translateY(0); }
+.user-pill.visible { display: inline-flex; }
+.user-pill-text { text-align: left; line-height: 1.2; }
+.user-pill-name { font-weight: 600; font-size: 13px; color: var(--g-text); }
+.user-pill-arrow {
+  color: var(--g-text-hint);
+  transition: all .2s ease;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+.avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--g-brand), var(--g-info));
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; color: white;
+}
+.wallet-short {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--g-text-secondary);
+}
+
+/* === Layout === */
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.screen { display: none; animation: screenIn .5s cubic-bezier(.2, .8, .2, 1); }
+.screen.active { display: block; }
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header { margin-bottom: 28px; }
+.page-kicker {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--g-brand);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  background: var(--g-brand-soft);
+  border-radius: 5px;
+  margin-bottom: 14px;
+}
+.page-title {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+.page-desc {
+  font-size: 15px;
+  color: var(--g-text-secondary);
+  max-width: 640px;
+  line-height: 1.55;
+}
+
+/* === Step 1: Registration === */
+.auth-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  min-height: 72vh;
+}
+.auth-hero h1 {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  margin-bottom: 22px;
+}
+.auth-hero h1 .accent {
+  background: linear-gradient(120deg, var(--g-brand), var(--g-info));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.auth-hero p {
+  font-size: 17px;
+  color: var(--g-text-secondary);
+  line-height: 1.6;
+  max-width: 500px;
+  margin-bottom: 28px;
+}
+.hero-stats {
+  display: flex; gap: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--g-border);
+}
+.hero-stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--g-text);
+}
+.hero-stat-label {
+  font-size: 12px;
+  color: var(--g-text-hint);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-card {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: var(--shadow-3);
+  position: relative;
+  overflow: hidden;
+}
+.auth-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--g-info), var(--g-brand), var(--g-brand-dark));
+}
+.auth-card-title {
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+.auth-card-sub {
+  color: var(--g-text-secondary);
+  font-size: 13px;
+  margin-bottom: 22px;
+}
+.auth-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--g-text-hint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 20px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.auth-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--g-border);
+}
+.auth-providers { display: grid; gap: 8px; }
+.auth-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  color: var(--g-text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.auth-btn:hover {
+  background: var(--g-bg-4);
+  border-color: var(--g-border-hover);
+  transform: translateY(-1px);
+}
+.auth-btn .icon {
+  width: 20px; height: 20px; flex-shrink: 0;
+  display: grid; place-items: center;
+  font-weight: 700;
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.icon-yandex { background: #fc3f1d; color: white; }
+.icon-google { background: white; color: #111; }
+.icon-sber   { background: linear-gradient(135deg, #21a038, #189e30); color: white; }
+.icon-tbank  { background: #ffdd2d; color: #111; }
+.icon-wallet { background: linear-gradient(135deg, var(--g-brand), var(--g-info)); color: white; }
+
+.auth-legal {
+  font-size: 11px;
+  color: var(--g-text-hint);
+  margin-top: 18px;
+  line-height: 1.5;
+  text-align: center;
+}
+.auth-legal a { color: var(--g-text-secondary); }
+
+/* === Step 2: Confirmation === */
+.confirm-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 72vh;
+}
+.confirm-card {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-xl);
+  padding: 44px 36px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-3);
+}
+.confirm-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 20px;
+  position: relative;
+}
+.confirm-ring {
+  width: 72px; height: 72px;
+  border: 3px solid var(--g-border);
+  border-top-color: var(--g-brand);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.confirm-ring.done {
+  border-color: var(--g-success);
+  animation: none;
+}
+.check-mark {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  font-size: 32px;
+  color: var(--g-success);
+  font-weight: 700;
+}
+.confirm-ring.done + .check-mark { display: grid; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.confirm-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+.confirm-desc { color: var(--g-text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+
+.confirm-progress {
+  display: grid; gap: 10px;
+  text-align: left;
+  background: var(--g-bg-3);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 22px;
+}
+.confirm-step-row {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px;
+  color: var(--g-text-hint);
+}
+.confirm-step-row.done { color: var(--g-text); }
+.confirm-step-row.active { color: var(--g-brand); }
+.confirm-step-row .dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  flex-shrink: 0;
+  position: relative;
+}
+.confirm-step-row.done .dot { background: var(--g-success); border-color: var(--g-success); }
+.confirm-step-row.done .dot::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 9px; color: white; font-weight: 900;
+}
+.confirm-step-row.active .dot::before {
+  content: ''; position: absolute; inset: -4px;
+  border: 2px solid var(--g-brand);
+  border-radius: 50%;
+  opacity: .3;
+  animation: pulse 1.4s ease-out infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(.8); opacity: .5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.wallet-info {
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.wallet-info-label {
+  font-size: 11px;
+  color: var(--g-text-hint);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 4px;
+}
+.wallet-info-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--g-text);
+  word-break: break-all;
+}
+
+/* === Buttons === */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--g-brand);
+  color: white;
+  box-shadow: 0 2px 8px rgba(43, 95, 255, 0.25);
+}
+.btn-primary:hover { background: var(--g-brand-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(43, 95, 255, 0.35); }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-secondary {
+  background: var(--g-bg-3);
+  color: var(--g-text);
+  border-color: var(--g-border);
+}
+.btn-secondary:hover { background: var(--g-bg-4); border-color: var(--g-border-hover); }
+.btn-ghost { background: transparent; color: var(--g-text-secondary); }
+.btn-ghost:hover { color: var(--g-text); background: var(--g-bg-3); }
+.btn-danger {
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+  border-color: rgba(255, 93, 98, 0.3);
+}
+.btn-danger:hover { background: rgba(255, 93, 98, 0.2); }
+.btn-lg { padding: 14px 24px; font-size: 15px; }
+.btn-block { width: 100%; }
+
+/* === Step 3: Dashboard === */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.dash-card {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.2,.8,.2,1);
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-1);
+}
+.dash-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  padding: 1px;
+  background: linear-gradient(135deg, transparent, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: all .3s ease;
+  pointer-events: none;
+}
+.dash-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--g-border-hover);
+  box-shadow: var(--shadow-2);
+}
+.dash-card.disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.dash-card-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+.dash-card-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--g-text-hint);
+  margin-bottom: 8px;
+}
+.dash-card-title {
+  font-size: 18px; font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.dash-card-desc {
+  font-size: 13px; color: var(--g-text-secondary);
+  line-height: 1.55;
+  flex: 1;
+}
+.dash-card-stat {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--g-border);
+  font-size: 12px;
+}
+.dash-card-stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--g-text);
+}
+.dash-card-arrow {
+  color: var(--g-text-hint);
+  transition: all .2s ease;
+}
+.dash-card:hover .dash-card-arrow { color: var(--g-brand); transform: translateX(3px); }
+
+.dash-summary {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-1);
+}
+.dash-summary-left { display: flex; align-items: center; gap: 16px; }
+.dash-summary-avatar {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--g-brand), var(--g-info));
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 20px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(43, 95, 255, 0.25);
+}
+.dash-summary-name { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.dash-summary-wallet {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--g-text-secondary);
+  margin-top: 2px;
+}
+.dash-summary-metrics { display: flex; gap: 28px; }
+.dash-metric { text-align: right; }
+.dash-metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+}
+.dash-metric-label {
+  font-size: 11px;
+  color: var(--g-text-hint);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 2px;
+}
+
+/* === Step 4: Upload competencies === */
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+.panel {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+.panel-header {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--g-border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.panel-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.panel-body { padding: 22px; }
+
+.upload-drop {
+  border: 2px dashed var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.upload-drop:hover {
+  border-color: var(--g-brand);
+  background: var(--g-brand-soft);
+}
+.upload-drop-icon {
+  width: 48px; height: 48px;
+  margin: 0 auto 12px;
+  background: var(--g-bg-3);
+  border-radius: 12px;
+  display: grid; place-items: center;
+  font-size: 20px;
+}
+.upload-drop-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.upload-drop-sub { font-size: 12px; color: var(--g-text-hint); }
+
+.cert-list { display: grid; gap: 10px; margin-top: 18px; }
+.cert-item {
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 14px;
+  transition: border-color .2s;
+}
+.cert-item:hover { border-color: var(--g-border-hover); }
+.cert-thumb {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--g-info), var(--g-purple));
+  display: grid; place-items: center;
+  font-size: 16px; color: white;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.cert-thumb.t-cert { background: linear-gradient(135deg, var(--g-info), var(--g-brand)); }
+.cert-thumb.t-diploma { background: linear-gradient(135deg, var(--g-brand), var(--g-brand-dark)); color: white; }
+.cert-thumb.t-badge { background: linear-gradient(135deg, var(--g-purple), var(--g-brand)); }
+.cert-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.cert-issuer {
+  font-size: 12px; color: var(--g-text-hint);
+  display: flex; align-items: center; gap: 6px;
+}
+.cert-issuer .verified {
+  color: var(--g-success);
+  display: inline-flex; align-items: center; gap: 3px;
+  font-weight: 600;
+}
+.cert-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--g-text-hint); text-align: right; }
+.cert-del {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--g-border);
+  color: var(--g-text-hint);
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 14px;
+}
+.cert-del:hover { color: var(--g-danger); border-color: var(--g-danger); }
+
+.skill-input-wrap {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+.input {
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  color: var(--g-text);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  transition: all .18s;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--g-brand);
+  background: var(--g-bg-2);
+  box-shadow: 0 0 0 3px var(--g-brand-soft);
+}
+.input::placeholder { color: var(--g-text-hint); }
+select.input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238e96a8'><path d='M5 8l5 5 5-5H5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 34px;
+}
+
+.skill-chip-list {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.skill-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px 6px 12px;
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: 999px;
+  font-size: 13px;
+}
+.skill-chip .lvl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--g-brand);
+  padding: 2px 5px;
+  background: var(--g-brand-soft);
+  border-radius: 4px;
+}
+.skill-chip .x {
+  background: none; border: none; color: var(--g-text-hint);
+  cursor: pointer; padding: 2px; border-radius: 4px;
+  font-size: 14px; line-height: 1;
+}
+.skill-chip .x:hover { color: var(--g-danger); }
+
+.summary-card {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  position: sticky;
+  top: 90px;
+  box-shadow: var(--shadow-1);
+}
+.summary-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.summary-stat {
+  display: flex; justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--g-border);
+  font-size: 13px;
+}
+.summary-stat:last-of-type { border-bottom: none; }
+.summary-stat .label { color: var(--g-text-secondary); }
+.summary-stat .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+/* === Step 5: Competency web (radar chart) === */
+/* === Step 5: Competency web (radar chart) === */
+.radar-onto-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: var(--g-brand-softer);
+  border: 1px solid var(--g-brand-soft);
+  border-radius: var(--radius-md);
+  align-items: center;
+}
+.radar-onto-info-label {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--g-brand);
+  padding: 6px 10px;
+  background: var(--g-brand-soft);
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.radar-onto-info-value {
+  grid-column: 2; grid-row: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--g-text);
+  letter-spacing: -0.01em;
+}
+.radar-onto-info-meta {
+  grid-column: 2; grid-row: 2;
+  font-size: 12px;
+  color: var(--g-text-secondary);
+  margin-top: 2px;
+}
+.radar-wrap { display: flex; justify-content: center; padding: 20px 0; }
+.filter-bar {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--g-border);
+  align-items: center;
+}
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g-text-hint);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-right: 4px;
+}
+
+.radar-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 0 22px 22px;
+}
+.radar-legend-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px;
+}
+.radar-legend-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.radar-legend-val {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--g-text-secondary);
+}
+
+.prof-match-list { display: grid; gap: 10px; }
+.prof-match-item {
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+.prof-match-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.prof-match-name { font-size: 14px; font-weight: 600; }
+.prof-match-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g-brand);
+}
+.prof-bar {
+  height: 6px;
+  background: var(--g-bg-4);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.prof-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--g-brand), var(--g-info));
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(.2,.8,.2,1);
+}
+
+/* === Step 6: Profile generation === */
+.gen-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  align-items: start;
+}
+.select-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 8px;
+}
+.select-row:hover { border-color: var(--g-border-hover); }
+.select-row.selected {
+  border-color: var(--g-brand);
+  background: var(--g-brand-soft);
+}
+.check-box {
+  width: 18px; height: 18px;
+  border: 2px solid var(--g-border);
+  border-radius: 5px;
+  flex-shrink: 0;
+  display: grid; place-items: center;
+  transition: all .15s;
+}
+.select-row.selected .check-box {
+  background: var(--g-brand);
+  border-color: var(--g-brand);
+}
+.select-row.selected .check-box::after {
+  content: '✓'; font-size: 11px; color: white; font-weight: 900;
+}
+.select-label { flex: 1; font-size: 13px; }
+.select-name { font-weight: 600; margin-bottom: 2px; }
+.select-sub { font-size: 11px; color: var(--g-text-hint); }
+
+.section-sub-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--g-text-hint);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin: 18px 0 10px;
+}
+.section-sub-title:first-child { margin-top: 0; }
+
+.share-card {
+  background: linear-gradient(160deg, var(--g-bg-2), var(--g-bg-3));
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: sticky;
+  top: 90px;
+  box-shadow: var(--shadow-2);
+}
+.share-tabs {
+  display: flex;
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+.share-tab {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--g-text-hint);
+  transition: all .2s;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+.share-tab.active {
+  background: var(--g-bg-2);
+  color: var(--g-brand);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, .06);
+}
+
+.qr-box {
+  background: white;
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  box-shadow: inset 0 0 0 1px var(--g-bg-3);
+}
+#qr-canvas img, #qr-canvas canvas { display: block; }
+
+.link-box {
+  background: var(--g-bg-3);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  word-break: break-all;
+  color: var(--g-text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* === Step 7: History === */
+.tx-list { display: grid; gap: 8px; }
+.tx-row {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 18px;
+  align-items: center;
+  transition: all .2s;
+  box-shadow: var(--shadow-1);
+}
+.tx-row:hover { border-color: var(--g-border-hover); }
+.tx-status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+.tx-status-dot.success { background: var(--g-success); box-shadow: 0 0 10px var(--g-success); }
+.tx-status-dot.revoked { background: var(--g-danger); }
+.tx-status-dot.pending { background: var(--g-brand); }
+.tx-status-dot.pending::after {
+  content: ''; position: absolute; inset: -4px;
+  border: 2px solid var(--g-brand);
+  border-radius: 50%;
+  animation: pulse 1.4s infinite;
+}
+.tx-main { min-width: 0; }
+.tx-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.tx-sub {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  font-size: 12px; color: var(--g-text-hint);
+  align-items: center;
+}
+.tx-hash {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--g-info);
+  background: var(--g-info-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.tx-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--g-text-hint);
+}
+.tx-badge {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.tx-badge.success { background: var(--g-success-soft); color: var(--g-success); }
+.tx-badge.revoked { background: var(--g-danger-soft); color: var(--g-danger); }
+.tx-badge.pending { background: var(--g-brand-soft); color: var(--g-brand); }
+
+.tab-bar {
+  display: flex; gap: 4px;
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  width: max-content;
+}
+.tab-bar-btn {
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g-text-hint);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+}
+.tab-bar-btn.active {
+  background: var(--g-bg-2);
+  color: var(--g-brand);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, .06);
+}
+
+/* Access list */
+.access-list { display: grid; gap: 10px; }
+.access-row {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  box-shadow: var(--shadow-1);
+}
+.access-logo {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  flex-shrink: 0;
+}
+.access-info-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.access-info-sub { font-size: 12px; color: var(--g-text-hint); }
+.access-info-sub-row {
+  display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap;
+  font-size: 11px;
+}
+.access-info-tag {
+  padding: 2px 8px;
+  background: var(--g-bg-3);
+  border-radius: 4px;
+  color: var(--g-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* === Nav buttons at bottom === */
+.nav-actions {
+  display: flex; justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--g-border);
+  gap: 12px;
+}
+
+/* === Toast === */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 10000;
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-left: 3px solid var(--g-success);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  min-width: 260px;
+  max-width: 360px;
+  box-shadow: var(--shadow-3);
+  animation: toastIn .3s cubic-bezier(.2, .8, .2, 1);
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.toast.error { border-left-color: var(--g-danger); }
+.toast.info { border-left-color: var(--g-info); }
+.toast-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.toast-msg { font-size: 12px; color: var(--g-text-secondary); line-height: 1.4; }
+@keyframes toastIn {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* === Modal === */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 24, 38, 0.4);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--g-bg-2);
+  border: 1px solid var(--g-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  max-width: 480px;
+  width: 100%;
+  animation: modalIn .25s cubic-bezier(.2, .8, .2, 1);
+  box-shadow: var(--shadow-3);
+}
+@keyframes modalIn {
+  from { transform: scale(.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+.modal-desc { color: var(--g-text-secondary); font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* === Responsive === */
+@media (max-width: 980px) {
+  .auth-wrap, .split-layout, .gen-layout { grid-template-columns: 1fr; }
+  .auth-hero h1 { font-size: 38px; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .share-card, .summary-card { position: static; }
+  .page-title { font-size: 26px; }
+  .dash-summary-metrics { width: 100%; justify-content: space-between; }
+}
+
+@media (max-width: 640px) {
+  .app { padding: 20px 16px 60px; }
+  .topbar-inner { padding: 12px 16px; }
+  .user-pill-text { display: none; }
+  .cert-item { grid-template-columns: auto 1fr auto; }
+  .cert-meta { grid-column: 2; text-align: left; }
+  .tx-row { grid-template-columns: auto 1fr; grid-row-gap: 6px; }
+  .tx-row > :nth-child(3), .tx-row > :nth-child(4) { grid-column: 2; }
+}
+
+/* Hidden file input */
+#file-input { display: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--g-bg); }
+::-webkit-scrollbar-thumb { background: var(--g-bg-4); border-radius: 5px; border: 2px solid var(--g-bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--g-border-hover); }
+
+.empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--g-text-hint);
+  font-size: 13px;
+}
+</style>
 </head>
 <body>
-  <div id="root"></div>
 
-  <!-- Import map for ESM -->
-  <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "@gravity-ui/uikit": "https://esm.sh/@gravity-ui/uikit@6.29.0",
-        "@gravity-ui/icons": "https://esm.sh/@gravity-ui/icons@2.9.0"
+<!-- Top bar -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-logo">SC</div>
+      <span class="brand-name">SkillChain</span>
+      <span class="brand-tag">MVP v0.1</span>
+    </div>
+
+    <button class="user-pill" id="user-pill" onclick="goto(3)" title="Перейти в личный кабинет" aria-label="Личный кабинет">
+      <div class="avatar" id="user-avatar">A</div>
+      <div class="user-pill-text">
+        <div class="user-pill-name" id="user-name">Alex Ivanov</div>
+        <div class="wallet-short" id="user-wallet">0x7a3f…e891</div>
+      </div>
+      <svg class="user-pill-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
+        <path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main class="app">
+
+<!-- ============================================ -->
+<!-- STEP 1: REGISTRATION                         -->
+<!-- ============================================ -->
+<section class="screen active" data-screen="1">
+  <div class="auth-wrap">
+    <div class="auth-hero">
+      <div class="page-kicker">Decentralized Skills Protocol</div>
+      <h1>Ваши компетенции<br><span class="accent">в блокчейне</span>.<br>Под вашим контролем.</h1>
+      <p>SkillChain — децентрализованный реестр цифровых компетенций. Храните сертификаты, дипломы и бейджи как NFT, делитесь верифицируемым профилем с работодателями через QR-код и отзывайте доступ в один клик.</p>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num">12.4K</div>
+          <div class="hero-stat-label">Выданных сертификатов</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">340</div>
+          <div class="hero-stat-label">Работодателей</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">87</div>
+          <div class="hero-stat-label">Аккредитованных эмитентов</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-card-title">Войти в SkillChain</div>
+      <div class="auth-card-sub">Выберите удобный способ авторизации. Все данные останутся у вас.</div>
+
+      <div class="auth-section-label">Web 2.0 провайдеры</div>
+      <div class="auth-providers">
+        <button class="auth-btn" onclick="handleAuth('yandex')">
+          <span class="icon icon-yandex">Я</span>
+          <span>Войти с Яндекс ID</span>
+        </button>
+        <button class="auth-btn" onclick="handleAuth('google')">
+          <span class="icon icon-google">G</span>
+          <span>Войти с Google</span>
+        </button>
+        <button class="auth-btn" onclick="handleAuth('sber')">
+          <span class="icon icon-sber">S</span>
+          <span>Войти со Сбер ID</span>
+        </button>
+        <button class="auth-btn" onclick="handleAuth('tbank')">
+          <span class="icon icon-tbank">T</span>
+          <span>Войти с Т-Банк ID</span>
+        </button>
+      </div>
+
+      <div class="auth-section-label">Web 3.0 кошельки</div>
+      <div class="auth-providers">
+        <button class="auth-btn" onclick="handleAuth('wallet')">
+          <span class="icon icon-wallet">₩</span>
+          <span>Подключить кошелёк</span>
+        </button>
+      </div>
+
+      <div class="auth-legal">
+        Нажимая кнопку, вы соглашаетесь с <a href="#">условиями</a> и <a href="#">политикой данных</a>.<br>
+        Приватный ключ остаётся в вашем устройстве.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STEP 2: CONFIRMATION                         -->
+<!-- ============================================ -->
+<section class="screen" data-screen="2">
+  <div class="confirm-wrap">
+    <div class="confirm-card">
+      <div class="confirm-icon">
+        <div class="confirm-ring" id="confirm-ring"></div>
+        <div class="check-mark">✓</div>
+      </div>
+      <div class="confirm-title" id="confirm-title">Подтверждение регистрации</div>
+      <div class="confirm-desc" id="confirm-desc">Создаём ваш децентрализованный идентификатор (DID) и деплоим смарт-контракт в тестовой сети…</div>
+
+      <div class="confirm-progress">
+        <div class="confirm-step-row" data-pstep="1"><div class="dot"></div>Верификация провайдера</div>
+        <div class="confirm-step-row" data-pstep="2"><div class="dot"></div>Создание DID (Decentralized ID)</div>
+        <div class="confirm-step-row" data-pstep="3"><div class="dot"></div>Деплой SkillVault-контракта</div>
+        <div class="confirm-step-row" data-pstep="4"><div class="dot"></div>Генерация публичного ключа</div>
+      </div>
+
+      <div class="wallet-info" id="did-info" style="display:none">
+        <div class="wallet-info-label">Ваш DID</div>
+        <div class="wallet-info-value" id="did-value">did:skillchain:0x7a3f...e891</div>
+      </div>
+
+      <button class="btn btn-primary btn-lg btn-block" id="confirm-continue" disabled>
+        Подождите…
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STEP 3: DASHBOARD                            -->
+<!-- ============================================ -->
+<section class="screen" data-screen="3">
+  <div class="page-header">
+    <div class="page-kicker">Личный кабинет</div>
+    <h1 class="page-title">Добро пожаловать, <span id="greeting-name">Alex</span>!</h1>
+    <p class="page-desc">Ваш DID создан. Выберите любой из разделов, чтобы продолжить настройку вашего профиля компетенций.</p>
+  </div>
+
+  <div class="dash-summary">
+    <div class="dash-summary-left">
+      <div class="dash-summary-avatar" id="dash-avatar">A</div>
+      <div>
+        <div class="dash-summary-name" id="dash-name">Alex Ivanov</div>
+        <div class="dash-summary-wallet" id="dash-did">did:skillchain:0x7a3f...e891</div>
+      </div>
+    </div>
+    <div class="dash-summary-metrics">
+      <div class="dash-metric">
+        <div class="dash-metric-val" id="metric-certs">0</div>
+        <div class="dash-metric-label">Сертификатов</div>
+      </div>
+      <div class="dash-metric">
+        <div class="dash-metric-val" id="metric-skills">0</div>
+        <div class="dash-metric-label">Навыков</div>
+      </div>
+      <div class="dash-metric">
+        <div class="dash-metric-val" id="metric-access">0</div>
+        <div class="dash-metric-label">Доступов</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-card" onclick="goto(4)" id="card-4">
+      <div class="dash-card-icon" style="background:var(--g-info-soft); color:var(--g-info)">📜</div>
+      <div class="dash-card-num">Раздел 01</div>
+      <div class="dash-card-title">Загрузка компетенций</div>
+      <div class="dash-card-desc">Добавьте сертификаты, дипломы, бейджи от аккредитованных эмитентов и укажите свои навыки.</div>
+      <div class="dash-card-stat">
+        <span style="color:var(--g-text-secondary)">Загружено</span>
+        <span class="dash-card-stat-num" id="stat-certs">0 сертификатов</span>
+        <span class="dash-card-arrow">→</span>
+      </div>
+    </div>
+
+    <div class="dash-card" onclick="goto(5)" id="card-5">
+      <div class="dash-card-icon" style="background:var(--g-purple-soft); color:var(--g-purple)">🕸️</div>
+      <div class="dash-card-num">Раздел 02</div>
+      <div class="dash-card-title">Профиль компетенций</div>
+      <div class="dash-card-desc">Визуализация навыков в виде радарной диаграммы. Фильтры по онтологиям и подходящим профессиям.</div>
+      <div class="dash-card-stat">
+        <span style="color:var(--g-text-secondary)">Навыков в профиле</span>
+        <span class="dash-card-stat-num" id="card-5-status">0</span>
+        <span class="dash-card-arrow">→</span>
+      </div>
+    </div>
+
+    <div class="dash-card" onclick="goto(6)" id="card-6">
+      <div class="dash-card-icon" style="background:var(--g-brand-soft); color:var(--g-brand)">🔗</div>
+      <div class="dash-card-num">Раздел 03</div>
+      <div class="dash-card-title">Профиль для работодателя</div>
+      <div class="dash-card-desc">Выберите навыки и сертификаты для шеринга. Сгенерируйте защищённую ссылку или QR-код.</div>
+      <div class="dash-card-stat">
+        <span style="color:var(--g-text-secondary)">Публичных профилей</span>
+        <span class="dash-card-stat-num" id="card-6-status">0</span>
+        <span class="dash-card-arrow">→</span>
+      </div>
+    </div>
+
+    <div class="dash-card" onclick="goto(7)" id="card-7">
+      <div class="dash-card-icon" style="background:var(--g-success-soft); color:var(--g-success)">🛡️</div>
+      <div class="dash-card-num">Раздел 04</div>
+      <div class="dash-card-title">Управление и отзыв</div>
+      <div class="dash-card-desc">История транзакций блокчейна, список работодателей с доступом, статус сертификатов, возможность отзыва.</div>
+      <div class="dash-card-stat">
+        <span style="color:var(--g-text-secondary)">Активных доступов</span>
+        <span class="dash-card-stat-num" id="card-7-status">0</span>
+        <span class="dash-card-arrow">→</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STEP 4: COMPETENCIES UPLOAD                  -->
+<!-- ============================================ -->
+<section class="screen" data-screen="4">
+  <div class="page-header">
+    <div class="page-kicker">Раздел 01 · Загрузка компетенций</div>
+    <h1 class="page-title">Управление сертификатами и навыками</h1>
+    <p class="page-desc">Добавьте документы от аккредитованных эмитентов. Каждый файл верифицируется и фиксируется в блокчейне как подтверждение вашей квалификации.</p>
+  </div>
+
+  <div class="split-layout">
+    <div style="display:grid;gap:16px">
+      <!-- Documents -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Сертификаты, дипломы, бейджи</div>
+          <div style="font-size:12px;color:var(--g-text-hint);font-family:'JetBrains Mono',monospace" id="cert-count">0 документов</div>
+        </div>
+        <div class="panel-body">
+          <div class="upload-drop" id="upload-drop" onclick="document.getElementById('file-input').click()">
+            <div class="upload-drop-icon">📤</div>
+            <div class="upload-drop-title">Перетащите файлы или кликните для выбора</div>
+            <div class="upload-drop-sub">PDF, JPG, PNG · до 10 МБ · или выберите из списка демо-эмитентов</div>
+          </div>
+          <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png" />
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px" onclick="addDemoCert('cert')">+ Демо-сертификат</button>
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px" onclick="addDemoCert('diploma')">+ Демо-диплом</button>
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px" onclick="addDemoCert('badge')">+ Демо-бейдж</button>
+          </div>
+
+          <div class="cert-list" id="cert-list"></div>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Навыки и компетенции</div>
+          <div style="font-size:12px;color:var(--g-text-hint);font-family:'JetBrains Mono',monospace" id="skill-count">0 навыков</div>
+        </div>
+        <div class="panel-body">
+          <div class="skill-input-wrap">
+            <input class="input" id="skill-input" placeholder="Например: Python, Проектное управление, Figma…" />
+            <select class="input" id="skill-level" style="max-width:150px">
+              <option value="Начальный">Начальный</option>
+              <option value="Средний" selected>Средний</option>
+              <option value="Продвинутый">Продвинутый</option>
+              <option value="Эксперт">Эксперт</option>
+            </select>
+            <button class="btn btn-primary" onclick="addSkill()">Добавить</button>
+          </div>
+
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="quickSkill('Python', 'Продвинутый')">+ Python</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="quickSkill('SQL', 'Средний')">+ SQL</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="quickSkill('Agile/Scrum', 'Продвинутый')">+ Agile/Scrum</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="quickSkill('Git', 'Эксперт')">+ Git</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="quickSkill('Docker', 'Средний')">+ Docker</button>
+          </div>
+
+          <div class="skill-chip-list" id="skill-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-card">
+      <div class="summary-title">📊 Сводка</div>
+      <div class="summary-stat">
+        <span class="label">Сертификатов</span>
+        <span class="val" id="sum-certs">0</span>
+      </div>
+      <div class="summary-stat">
+        <span class="label">Дипломов</span>
+        <span class="val" id="sum-diplomas">0</span>
+      </div>
+      <div class="summary-stat">
+        <span class="label">Бейджей</span>
+        <span class="val" id="sum-badges">0</span>
+      </div>
+      <div class="summary-stat">
+        <span class="label">Навыков указано</span>
+        <span class="val" id="sum-skills">0</span>
+      </div>
+      <div class="summary-stat">
+        <span class="label">Верифицировано</span>
+        <span class="val" id="sum-verified" style="color:var(--g-success)">0</span>
+      </div>
+
+      <div style="margin-top:16px;padding:12px;background:var(--g-info-soft);border-radius:var(--radius-md);font-size:12px;line-height:1.5;color:var(--g-text-secondary)">
+        💡 Чем больше <b style="color:var(--g-text)">документов</b> и <b style="color:var(--g-text)">навыков</b> вы добавите, тем точнее будет ваш профиль компетенций.
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="goto(3)">← Назад в кабинет</button>
+    <button class="btn btn-primary btn-lg" id="next-to-5" onclick="goto(5)">Перейти: Профиль компетенций →</button>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STEP 5: COMPETENCY PROFILE (RADAR)           -->
+<!-- ============================================ -->
+<section class="screen" data-screen="5">
+  <div class="page-header">
+    <div class="page-kicker">Раздел 02 · Профиль компетенций</div>
+    <h1 class="page-title">Ваша радарная диаграмма навыков</h1>
+    <p class="page-desc">Интерактивная визуализация уровней владения по категориям с фильтрацией по онтологии и соответствия профессиям.</p>
+  </div>
+
+  <div class="split-layout">
+    <div class="panel">
+      <div class="filter-bar">
+        <span class="filter-label">Онтология:</span>
+        <select class="input" id="ontology-filter" style="max-width:220px" onchange="renderRadar()">
+          <option value="all">Все компетенции</option>
+          <option value="tech">ИТ и технологии (O*NET)</option>
+          <option value="soft">Soft skills (ESCO)</option>
+          <option value="mgmt">Менеджмент (PMBOK)</option>
+        </select>
+        <span class="filter-label" style="margin-left:auto">Профессия:</span>
+        <select class="input" id="profession-filter" style="max-width:220px" onchange="renderRadar()">
+          <option value="all">Все</option>
+          <option value="backend">Backend-разработчик</option>
+          <option value="data">Data Analyst</option>
+          <option value="pm">Project Manager</option>
+          <option value="devops">DevOps Engineer</option>
+        </select>
+      </div>
+      <div class="panel-body">
+        <div class="radar-onto-info" id="radar-onto-info">
+          <div class="radar-onto-info-label">Активная онтология</div>
+          <div class="radar-onto-info-value" id="radar-onto-value">Все компетенции</div>
+          <div class="radar-onto-info-meta" id="radar-onto-meta">Оси диаграммы формируются из ваших навыков</div>
+        </div>
+        <div class="radar-wrap">
+          <svg id="radar-svg" viewBox="0 0 500 500" width="100%" style="max-width:500px;height:auto"></svg>
+        </div>
+        <div class="radar-legend" id="radar-legend"></div>
+      </div>
+    </div>
+
+    <div style="display:grid;gap:16px">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Соответствие профессиям</div>
+        </div>
+        <div class="panel-body">
+          <div class="prof-match-list" id="prof-match-list"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">💡 Рекомендации</div>
+        </div>
+        <div class="panel-body" style="font-size:13px;color:var(--g-text-secondary);line-height:1.6" id="recommendations">
+          Добавьте навыки, чтобы увидеть персональные рекомендации по усилению вашего профиля.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="goto(4)">← Назад к загрузке</button>
+    <button class="btn btn-primary btn-lg" onclick="goto(6)">Перейти: Профиль для работодателя →</button>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STEP 6: EMPLOYER PROFILE GENERATION          -->
+<!-- ============================================ -->
+<section class="screen" data-screen="6">
+  <div class="page-header">
+    <div class="page-kicker">Раздел 03 · Публичный профиль</div>
+    <h1 class="page-title">Профиль для работодателя</h1>
+    <p class="page-desc">Выберите, какие именно сертификаты и навыки показать работодателю. Получите защищённую ссылку или QR-код с контролем доступа.</p>
+  </div>
+
+  <div class="gen-layout">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Что включить в профиль</div>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px" onclick="selectAllShare()">Выбрать всё</button>
+      </div>
+      <div class="panel-body">
+        <div class="section-sub-title">Сертификаты и документы</div>
+        <div id="share-certs-list"></div>
+
+        <div class="section-sub-title">Навыки</div>
+        <div id="share-skills-list"></div>
+
+        <div class="section-sub-title">Настройки доступа</div>
+        <div class="select-row" onclick="toggleExpiry(this)">
+          <div class="check-box"></div>
+          <div class="select-label">
+            <div class="select-name">Срок действия ссылки — 30 дней</div>
+            <div class="select-sub">После истечения доступ автоматически закрывается</div>
+          </div>
+        </div>
+        <div class="select-row" onclick="toggleNotify(this)">
+          <div class="check-box"></div>
+          <div class="select-label">
+            <div class="select-name">Уведомлять об открытиях</div>
+            <div class="select-sub">Получать push при каждом просмотре работодателем</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="share-card">
+      <div class="share-tabs">
+        <button class="share-tab active" data-tab="qr" onclick="switchShareTab('qr')">QR-код</button>
+        <button class="share-tab" data-tab="link" onclick="switchShareTab('link')">Ссылка</button>
+      </div>
+
+      <div id="share-qr-view">
+        <div class="qr-box">
+          <div id="qr-canvas"></div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:var(--g-text-hint);margin-bottom:12px">
+          Отсканируйте или покажите работодателю
+        </div>
+      </div>
+
+      <div id="share-link-view" style="display:none">
+        <div style="font-size:12px;color:var(--g-text-hint);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600">Публичная ссылка</div>
+        <div class="link-box" id="public-link">https://skillchain.io/p/...</div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="generate-btn" onclick="generateProfile()">
+        🔐 Сгенерировать профиль
+      </button>
+      <button class="btn btn-secondary btn-block" style="margin-top:8px" onclick="copyLink()">
+        📋 Скопировать ссылку
+      </button>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--g-border);font-size:12px;color:var(--g-text-hint);line-height:1.5">
+        ⛓️ Транзакция публикации записана в блокчейн. Хэш: <span style="font-family:'JetBrains Mono',monospace;color:var(--g-info)" id="share-tx-hash">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="goto(5)">← Назад к профилю</button>
+    <button class="btn btn-primary btn-lg" onclick="goto(7)">Перейти: Управление и отзыв →</button>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STEP 7: ACCESS MANAGEMENT & HISTORY          -->
+<!-- ============================================ -->
+<section class="screen" data-screen="7">
+  <div class="page-header">
+    <div class="page-kicker">Раздел 04 · Управление и отзыв</div>
+    <h1 class="page-title">История и контроль доступа</h1>
+    <p class="page-desc">Полная история блокчейн-транзакций, список работодателей с доступом, статус сертификатов и возможность отозвать доступ в один клик.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-bar-btn active" data-mtab="history" onclick="switchManageTab('history')">⛓️ Транзакции блокчейна</button>
+    <button class="tab-bar-btn" data-mtab="access" onclick="switchManageTab('access')">🏢 Работодатели с доступом</button>
+    <button class="tab-bar-btn" data-mtab="certs" onclick="switchManageTab('certs')">📜 Статус сертификатов</button>
+  </div>
+
+  <div id="manage-history">
+    <div class="tx-list" id="tx-list"></div>
+  </div>
+
+  <div id="manage-access" style="display:none">
+    <div class="access-list" id="access-list"></div>
+  </div>
+
+  <div id="manage-certs" style="display:none">
+    <div class="tx-list" id="status-certs-list"></div>
+  </div>
+
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="goto(3)">← Вернуться в кабинет</button>
+    <button class="btn btn-secondary" onclick="exportData()">⬇️ Экспорт данных (JSON)</button>
+  </div>
+</section>
+
+</main>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Revoke modal -->
+<div class="modal-overlay" id="revoke-modal">
+  <div class="modal">
+    <div class="modal-title">Отозвать доступ?</div>
+    <div class="modal-desc" id="revoke-desc">Вы уверены, что хотите отозвать доступ к вашему профилю? Действие будет записано в блокчейн и не может быть отменено.</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-danger" onclick="confirmRevoke()">Да, отозвать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================
+// STATE
+// ================================================
+const state = {
+  currentStep: 1,
+  maxUnlocked: 1,
+  user: null,
+  certs: [],
+  skills: [],
+  shareSelection: { certs: new Set(), skills: new Set(), expiry: false, notify: false },
+  transactions: [],
+  employers: [],
+  sharedProfiles: 0,
+  revokeTarget: null,
+};
+
+// Demo data templates
+const demoProviders = {
+  yandex: { name: 'Алексей Иванов', email: 'a.ivanov@yandex.ru', provider: 'Яндекс ID' },
+  google: { name: 'Maria Petrova', email: 'maria.petrova@gmail.com', provider: 'Google' },
+  sber:   { name: 'Дмитрий Соколов', email: 'd.sokolov@sber.ru', provider: 'Сбер ID' },
+  tbank:  { name: 'Анна Морозова', email: 'a.morozova@tbank.ru', provider: 'Т-Банк ID' },
+  wallet: { name: 'Crypto User', email: null, provider: 'Web3 Wallet' },
+};
+
+const demoCerts = {
+  cert: [
+    { name: 'Python for Data Science', issuer: 'Coursera · Stanford', type: 'cert', skills: ['Python', 'Pandas', 'NumPy'], expiry: '2027-03-15' },
+    { name: 'AWS Cloud Practitioner', issuer: 'Amazon Web Services', type: 'cert', skills: ['AWS', 'Cloud'], expiry: '2026-12-10' },
+    { name: 'Scrum Master Certified', issuer: 'Scrum Alliance', type: 'cert', skills: ['Agile/Scrum', 'Leadership'], expiry: '2028-01-20' },
+  ],
+  diploma: [
+    { name: 'Магистр информационных систем', issuer: 'МФТИ', type: 'diploma', skills: ['Architecture', 'Algorithms'], expiry: null },
+    { name: 'Бакалавр прикладной математики', issuer: 'МГУ им. Ломоносова', type: 'diploma', skills: ['Математика', 'Статистика'], expiry: null },
+  ],
+  badge: [
+    { name: 'Open Source Contributor 2024', issuer: 'GitHub', type: 'badge', skills: ['Git', 'Open Source'], expiry: null },
+    { name: 'TypeScript Expert', issuer: 'Microsoft Learn', type: 'badge', skills: ['TypeScript', 'JavaScript'], expiry: '2027-06-01' },
+  ],
+};
+
+const demoEmployers = [
+  { name: 'Yandex', logo: 'Y', color: '#fc3f1d', access: '24 дня осталось', opens: 3, certs: 4, skills: 8 },
+  { name: 'VK Group', logo: 'VK', color: '#2787f5', access: '12 дней осталось', opens: 7, certs: 3, skills: 5 },
+  { name: 'Тинькофф', logo: 'T', color: '#ffdd2d', textColor:'#111', access: 'Неограничен', opens: 1, certs: 2, skills: 6 },
+];
+
+// ================================================
+// INITIALIZATION
+// ================================================
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+// ================================================
+// TOASTS
+// ================================================
+function toast(title, msg = '', type = 'success') {
+  const c = $('#toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<div style="flex:1"><div class="toast-title">${title}</div>${msg ? `<div class="toast-msg">${msg}</div>` : ''}</div>`;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .3s, transform .3s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(20px)';
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+// ================================================
+// NAVIGATION
+// ================================================
+function goto(step) {
+  // Free navigation: screens 1-2 are entry flow, 3-7 are freely accessible
+  // Require auth (user object) for screens 3+, otherwise redirect to auth
+  if (step >= 3 && !state.user) { step = 1; }
+  state.currentStep = step;
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $(`[data-screen="${step}"]`).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // trigger renders
+  if (step === 5) renderRadar();
+  if (step === 6) renderShareSelection();
+  if (step === 7) renderManageHistory();
+}
+
+// Kept for compatibility with existing call sites — no-op since sections are always accessible
+function unlockStep(step) {
+  if (step > state.maxUnlocked) state.maxUnlocked = step;
+}
+
+function mapScreenToStepChip(screen) { return 1; } // deprecated — stepper removed
+
+// ================================================
+// STEP 1: AUTH
+// ================================================
+function handleAuth(providerKey) {
+  state.user = { ...demoProviders[providerKey] };
+  // generate wallet
+  const hex = '0123456789abcdef';
+  let w = '0x';
+  for (let i = 0; i < 40; i++) w += hex[Math.floor(Math.random() * 16)];
+  state.user.wallet = w;
+  state.user.did = 'did:skillchain:' + w;
+  state.user.initials = (state.user.name || 'U').split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
+
+  toast('Провайдер выбран', `Авторизуемся через ${state.user.provider}…`, 'info');
+  unlockStep(2);
+  goto(2);
+  runConfirmationFlow();
+}
+
+// ================================================
+// STEP 2: CONFIRMATION
+// ================================================
+function runConfirmationFlow() {
+  const rows = $$('.confirm-step-row');
+  rows.forEach(r => r.classList.remove('active', 'done'));
+
+  let i = 0;
+  const total = rows.length;
+
+  function advance() {
+    if (i > 0) rows[i - 1].classList.remove('active');
+    if (i > 0) rows[i - 1].classList.add('done');
+    if (i < total) {
+      rows[i].classList.add('active');
+      i++;
+      setTimeout(advance, 900);
+    } else {
+      // done
+      $('#confirm-ring').classList.add('done');
+      $('#confirm-title').textContent = 'Регистрация завершена!';
+      $('#confirm-desc').textContent = `Добро пожаловать, ${state.user.name}. Ваш DID создан и записан в блокчейн.`;
+      $('#did-info').style.display = 'block';
+      $('#did-value').textContent = state.user.did.slice(0, 35) + '…';
+      const btn = $('#confirm-continue');
+      btn.disabled = false;
+      btn.textContent = '→ Перейти в личный кабинет';
+      btn.onclick = () => {
+        unlockStep(3);
+        initDashboard();
+        goto(3);
+      };
+      addTx('did_created', 'DID создан', 'success');
+      toast('Успех!', 'DID создан и записан в блокчейн', 'success');
+      showUserPill();
+    }
+  }
+  setTimeout(advance, 500);
+}
+
+function showUserPill() {
+  $('#user-pill').classList.add('visible');
+  $('#user-avatar').textContent = state.user.initials;
+  $('#user-name').textContent = state.user.name;
+  $('#user-wallet').textContent = state.user.wallet.slice(0, 6) + '…' + state.user.wallet.slice(-4);
+}
+
+// ================================================
+// STEP 3: DASHBOARD
+// ================================================
+function initDashboard() {
+  $('#greeting-name').textContent = state.user.name.split(' ')[0];
+  $('#dash-name').textContent = state.user.name;
+  $('#dash-did').textContent = state.user.did.slice(0, 40) + '…';
+  $('#dash-avatar').textContent = state.user.initials;
+  // Unlock step 4 (upload competencies) so the first dashboard card becomes clickable
+  unlockStep(4);
+  updateDashMetrics();
+}
+
+function updateDashMetrics() {
+  $('#metric-certs').textContent = state.certs.length;
+  $('#metric-skills').textContent = state.skills.length;
+  $('#metric-access').textContent = state.employers.length;
+
+  $('#stat-certs').textContent = state.certs.length + ' ' + plural(state.certs.length, ['сертификат', 'сертификата', 'сертификатов']);
+
+  // Dashboard card status lines — direct live counts, no gating
+  const c5 = $('#card-5-status'); if (c5) c5.textContent = state.skills.length;
+  const c6 = $('#card-6-status'); if (c6) c6.textContent = state.sharedProfiles || 0;
+  const c7 = $('#card-7-status'); if (c7) c7.textContent = state.employers.length;
+}
+
+function plural(n, forms) {
+  const a = Math.abs(n) % 100;
+  const b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b > 1 && b < 5) return forms[1];
+  if (b === 1) return forms[0];
+  return forms[2];
+}
+
+// ================================================
+// STEP 4: UPLOAD COMPETENCIES
+// ================================================
+function addDemoCert(type) {
+  const templates = demoCerts[type];
+  const used = state.certs.filter(c => c.type === type).map(c => c.name);
+  const available = templates.find(t => !used.includes(t.name));
+  if (!available) { toast('Все демо-документы добавлены', 'Попробуйте другой тип', 'info'); return; }
+
+  const cert = {
+    ...available,
+    id: 'cert_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    verified: true,
+    uploadedAt: new Date().toISOString(),
+    txHash: '0x' + Math.random().toString(16).slice(2, 10) + '...' + Math.random().toString(16).slice(2, 6),
+  };
+  state.certs.push(cert);
+
+  // Auto-add skills
+  cert.skills.forEach(skillName => {
+    if (!state.skills.find(s => s.name === skillName)) {
+      state.skills.push({ name: skillName, level: 'Средний', id: 'skill_' + Date.now() + Math.random() });
+    }
+  });
+
+  addTx('cert_added', `Документ: ${cert.name}`, 'success');
+  toast('Документ добавлен', cert.name, 'success');
+  renderCerts(); renderSkills(); updateSummary(); checkStep4Progress();
+}
+
+// File upload handling
+document.addEventListener('DOMContentLoaded', () => {
+  const fi = $('#file-input');
+  if (fi) {
+    fi.addEventListener('change', (e) => {
+      [...e.target.files].forEach(file => handleFileUpload(file));
+      e.target.value = '';
+    });
+  }
+
+  // Drag-drop
+  const drop = $('#upload-drop');
+  if (drop) {
+    ['dragenter', 'dragover'].forEach(ev => {
+      drop.addEventListener(ev, e => {
+        e.preventDefault();
+        drop.style.borderColor = 'var(--g-brand)';
+        drop.style.background = 'var(--g-brand-soft)';
+      });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      drop.addEventListener(ev, e => {
+        e.preventDefault();
+        drop.style.borderColor = '';
+        drop.style.background = '';
+      });
+    });
+    drop.addEventListener('drop', (e) => {
+      [...e.dataTransfer.files].forEach(f => handleFileUpload(f));
+    });
+  }
+
+  // Skill input Enter
+  const si = $('#skill-input');
+  if (si) {
+    si.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addSkill();
+    });
+  }
+});
+
+function handleFileUpload(file) {
+  const typeMap = { pdf: 'cert', jpg: 'badge', jpeg: 'badge', png: 'badge' };
+  const ext = file.name.split('.').pop().toLowerCase();
+  const type = typeMap[ext] || 'cert';
+  const cert = {
+    id: 'cert_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    name: file.name.replace(/\.[^.]+$/, ''),
+    issuer: 'Пользовательский файл',
+    type: type,
+    skills: [],
+    verified: false,
+    expiry: null,
+    uploadedAt: new Date().toISOString(),
+    txHash: '0x' + Math.random().toString(16).slice(2, 10) + '...' + Math.random().toString(16).slice(2, 6),
+  };
+  state.certs.push(cert);
+  addTx('cert_added', `Документ: ${cert.name}`, 'pending');
+  toast('Файл загружен', cert.name, 'info');
+  // simulate verification
+  setTimeout(() => {
+    cert.verified = true;
+    addTx('cert_verified', `Верифицирован: ${cert.name}`, 'success');
+    renderCerts(); updateSummary();
+  }, 1800);
+  renderCerts(); updateSummary(); checkStep4Progress();
+}
+
+function removeCert(id) {
+  const cert = state.certs.find(c => c.id === id);
+  state.certs = state.certs.filter(c => c.id !== id);
+  if (cert) addTx('cert_removed', `Удалён: ${cert.name}`, 'revoked');
+  renderCerts(); updateSummary(); checkStep4Progress();
+}
+
+function addSkill() {
+  const input = $('#skill-input');
+  const level = $('#skill-level').value;
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.skills.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+    toast('Навык уже добавлен', name, 'error'); return;
+  }
+  state.skills.push({ name, level, id: 'skill_' + Date.now() });
+  input.value = '';
+  renderSkills(); updateSummary(); checkStep4Progress();
+}
+
+function quickSkill(name, level) {
+  if (state.skills.find(s => s.name === name)) { toast('Уже добавлено', name, 'info'); return; }
+  state.skills.push({ name, level, id: 'skill_' + Date.now() });
+  renderSkills(); updateSummary(); checkStep4Progress();
+}
+
+function removeSkill(id) {
+  state.skills = state.skills.filter(s => s.id !== id);
+  renderSkills(); updateSummary(); checkStep4Progress();
+}
+
+function renderCerts() {
+  const list = $('#cert-list');
+  $('#cert-count').textContent = `${state.certs.length} ${plural(state.certs.length, ['документ', 'документа', 'документов'])}`;
+  if (state.certs.length === 0) {
+    list.innerHTML = '<div class="empty">Пока нет документов. Добавьте первый!</div>';
+    return;
+  }
+  list.innerHTML = state.certs.map(c => {
+    const typeLabels = { cert: 'Сертификат', diploma: 'Диплом', badge: 'Бейдж' };
+    const initials = c.name.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase().slice(0,2);
+    return `
+    <div class="cert-item">
+      <div class="cert-thumb t-${c.type}">${initials}</div>
+      <div style="min-width:0">
+        <div class="cert-name">${escapeHtml(c.name)}</div>
+        <div class="cert-issuer">
+          ${typeLabels[c.type] || ''} · ${escapeHtml(c.issuer)}
+          ${c.verified ? '<span class="verified">✓ верифицирован</span>' : '<span style="color:var(--g-brand)">⏳ проверка…</span>'}
+        </div>
+      </div>
+      <div class="cert-meta">
+        ${c.expiry ? 'до ' + new Date(c.expiry).toLocaleDateString('ru-RU') : 'бессрочно'}<br>
+        ${c.txHash.slice(0, 10)}…
+      </div>
+      <button class="cert-del" onclick="removeCert('${c.id}')" title="Удалить">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderSkills() {
+  const list = $('#skill-list');
+  $('#skill-count').textContent = `${state.skills.length} ${plural(state.skills.length, ['навык', 'навыка', 'навыков'])}`;
+  if (state.skills.length === 0) {
+    list.innerHTML = '<div class="empty">Укажите свои навыки и уровень владения</div>';
+    return;
+  }
+  list.innerHTML = state.skills.map(s => `
+    <div class="skill-chip">
+      <span>${escapeHtml(s.name)}</span>
+      <span class="lvl">${escapeHtml(s.level)}</span>
+      <button class="x" onclick="removeSkill('${s.id}')" title="Удалить">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateSummary() {
+  $('#sum-certs').textContent = state.certs.filter(c => c.type === 'cert').length;
+  $('#sum-diplomas').textContent = state.certs.filter(c => c.type === 'diploma').length;
+  $('#sum-badges').textContent = state.certs.filter(c => c.type === 'badge').length;
+  $('#sum-skills').textContent = state.skills.length;
+  $('#sum-verified').textContent = state.certs.filter(c => c.verified).length;
+  updateDashMetrics();
+}
+
+function checkStep4Progress() {
+  // Free navigation — no gating. Just keep state in sync for dashboard metrics.
+  updateDashMetrics();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ================================================
+// STEP 5: RADAR CHART — ontology-driven axes
+// ================================================
+
+// Three formal ontologies, each with its own fixed set of axes.
+// Switching the ontology in the UI changes which axes the radar measures.
+// Skills are mapped into axes by name matching (exact or substring, case-insensitive).
+const ontologyDefinitions = {
+  tech: {
+    label: 'O*NET — ИТ и технологии',
+    axes: [
+      { name: 'Программирование', skills: ['python','javascript','typescript','java','go','rust','c++','c#','kotlin','swift','php','ruby'] },
+      { name: 'Базы данных',      skills: ['sql','postgresql','mysql','mongodb','redis','elasticsearch','oracle','nosql'] },
+      { name: 'Cloud',            skills: ['aws','gcp','azure','cloud','google cloud'] },
+      { name: 'DevTools',         skills: ['git','docker','kubernetes','ci/cd','linux','bash','jenkins','terraform','ansible'] },
+      { name: 'Data Science',     skills: ['pandas','numpy','ml','machine learning','математика','статистика','tensorflow','pytorch','jupyter'] },
+      { name: 'Архитектура',      skills: ['architecture','algorithms','system design','microservices','design patterns'] },
+    ],
+  },
+  soft: {
+    label: 'ESCO — Soft skills',
+    axes: [
+      { name: 'Коммуникация',      skills: ['коммуникация','communication','presentation','public speaking','публичные выступления','переговоры'] },
+      { name: 'Лидерство',         skills: ['leadership','management','mentorship','менторство','лидерство','менеджмент'] },
+      { name: 'Командная работа',  skills: ['teamwork','open source','collaboration','командная работа','работа в команде'] },
+      { name: 'Решение задач',     skills: ['problem solving','algorithms','critical thinking','критическое мышление','аналитика'] },
+      { name: 'Адаптивность',      skills: ['adaptability','learning','обучаемость','адаптивность','гибкость'] },
+      { name: 'Креативность',      skills: ['creativity','design thinking','креативность','дизайн-мышление'] },
+    ],
+  },
+  mgmt: {
+    label: 'PMBOK — Менеджмент',
+    axes: [
+      { name: 'Планирование',         skills: ['project planning','agile/scrum','roadmap','планирование','scrum'] },
+      { name: 'Управление рисками',   skills: ['risk management','risk analysis','риски','управление рисками'] },
+      { name: 'Стейкхолдеры',         skills: ['stakeholder management','leadership','коммуникация','переговоры'] },
+      { name: 'Контроль качества',    skills: ['qa','quality management','testing','тестирование','quality assurance'] },
+      { name: 'Интеграция',           skills: ['integration','architecture','system design','интеграция'] },
+      { name: 'Методологии',          skills: ['agile/scrum','kanban','waterfall','safe','методологии','scrum','kanban'] },
+    ],
+  },
+};
+
+const levelValues = { 'Начальный': 25, 'Средний': 50, 'Продвинутый': 75, 'Эксперт': 100 };
+
+// Smart categorization: find best matching axis across all ontologies.
+function categorizeSkill(skillName) {
+  const nameLower = skillName.toLowerCase().trim();
+  for (const [ontoKey, onto] of Object.entries(ontologyDefinitions)) {
+    for (const axis of onto.axes) {
+      if (axis.skills.some(k => {
+        const kl = k.toLowerCase();
+        return nameLower === kl || nameLower.includes(kl) || kl.includes(nameLower);
+      })) {
+        return { cat: axis.name, onto: ontoKey };
       }
     }
-  </script>
+  }
+  return { cat: 'Другое', onto: null };
+}
 
-  <script type="module">
-    import React, { useState, useEffect, useRef } from 'react';
-    import { createRoot } from 'react-dom/client';
-    import {
-      ThemeProvider,
-      configure,
-      Button,
-      Card,
-      Label,
-      Select,
-      TextInput,
-      Spin,
-      Tabs,
-      TabsItem,
-      Icon,
-      Container,
-      spacing,
-    } from '@gravity-ui/uikit';
-    import { Check, Xmark, Plus, CircleCheck } from '@gravity-ui/icons';
+function matchSkillToAxis(skill, axis) {
+  const nameLower = skill.name.toLowerCase().trim();
+  return axis.skills.some(k => {
+    const kl = k.toLowerCase();
+    return nameLower === kl || nameLower.includes(kl) || kl.includes(nameLower);
+  });
+}
 
-    // Настройка Gravity UI – язык и тема
-    configure({ lang: 'ru' });
+function getCategorizedData() {
+  const ontoFilter = $('#ontology-filter')?.value || 'all';
 
-    // ========================= DATA =========================
-    const SKILLS_DATA = [
-      { id: 1, label: "Python", value: 85, category: "Программирование" },
-      { id: 2, label: "Machine Learning", value: 72, category: "AI/ML" },
-      { id: 3, label: "SQL", value: 90, category: "Данные" },
-      { id: 4, label: "React", value: 65, category: "Фронтенд" },
-      { id: 5, label: "Docker", value: 78, category: "DevOps" },
-      { id: 6, label: "Управление проектами", value: 60, category: "Soft Skills" },
-      { id: 7, label: "Data Analysis", value: 88, category: "Данные" },
-      { id: 8, label: "Deep Learning", value: 55, category: "AI/ML" },
-    ];
+  // "All" mode: derive axes organically from what the user actually has
+  if (ontoFilter === 'all') {
+    const cats = {};
+    state.skills.forEach(s => {
+      const { cat } = categorizeSkill(s.name);
+      if (!cats[cat]) cats[cat] = { total: 0, count: 0, skills: [] };
+      cats[cat].total += levelValues[s.level] || 50;
+      cats[cat].count++;
+      cats[cat].skills.push(s.name);
+    });
+    return Object.entries(cats).map(([name, v]) => ({
+      name, value: Math.round(v.total / v.count), skills: v.skills
+    }));
+  }
 
-    const CERTS_DATA = [
-      { id: 1, name: "Яндекс Практикум: Python Developer", issuer: "Яндекс", date: "2024-03-15", expires: "2026-03-15", status: "active", badge: "🎓", selected: true },
-      { id: 2, name: "Google Cloud Professional", issuer: "Google", date: "2023-11-01", expires: "2025-11-01", status: "active", badge: "☁️", selected: true },
-      { id: 3, name: "AWS Solutions Architect", issuer: "Amazon", date: "2023-05-20", expires: "2025-05-20", status: "active", badge: "⚡", selected: false },
-      { id: 4, name: "Scrum Master Certified", issuer: "Scrum Alliance", date: "2022-08-10", expires: "2024-08-10", status: "revoked", badge: "♻️", selected: false },
-    ];
+  // Specific ontology: use its fixed axes, compute value per axis from user skills
+  const onto = ontologyDefinitions[ontoFilter];
+  if (!onto) return [];
 
-    const TX_DATA = [
-      { id: "0x7f3a...9b2c", type: "credential_issued", entity: "Яндекс Практикум", date: "2024-03-15 14:32", action: "Выдан сертификат", status: "confirmed" },
-      { id: "0x4e1b...c7d8", type: "access_granted", entity: "Сбер HR Platform", date: "2024-02-28 09:15", action: "Доступ предоставлен", status: "confirmed" },
-      { id: "0x9c2f...e3a1", type: "credential_issued", entity: "Google", date: "2023-11-01 11:00", action: "Выдан сертификат", status: "confirmed" },
-      { id: "0x1d8e...f5b6", type: "access_revoked", entity: "TechCorp LLC", date: "2023-09-14 16:45", action: "Доступ отозван", status: "confirmed" },
-      { id: "0x5a7c...d2e9", type: "credential_issued", entity: "Amazon Web Services", date: "2023-05-20 10:22", action: "Выдан сертификат", status: "confirmed" },
-      { id: "0x3b9d...a8f0", type: "credential_revoked", entity: "Scrum Alliance", date: "2024-08-10 00:00", action: "Сертификат истёк", status: "confirmed" },
-    ];
+  return onto.axes.map(axis => {
+    const matched = state.skills.filter(s => matchSkillToAxis(s, axis));
+    const avg = matched.length > 0
+      ? Math.round(matched.reduce((a, m) => a + (levelValues[m.level] || 0), 0) / matched.length)
+      : 0;
+    return { name: axis.name, value: avg, skills: matched.map(m => m.name) };
+  });
+}
 
-    const EMPLOYERS = [
-      { name: "Сбер HR Platform", since: "2024-02-28", status: "active", access: ["Резюме", "Python", "ML сертификаты"] },
-      { name: "Яндекс Найм", since: "2024-01-10", status: "active", access: ["Все сертификаты", "Полный профиль"] },
-      { name: "TechCorp LLC", since: "2023-07-01", status: "revoked", access: ["Базовые данные"] },
-    ];
+const catColors = ['#2b5fff', '#0095ff', '#6366f1', '#10b981', '#0a3cd1', '#00b3d4', '#4a7aff', '#8b8ef5'];
 
-    const ONTOLOGIES = ["ESCO", "SkillsBase RU", "Профстандарт РФ"];
-    const PROFESSIONS = ["Data Scientist", "Backend Developer", "ML Engineer", "Аналитик данных", "DevOps Engineer"];
+function renderRadar() {
+  const ontoFilter = $('#ontology-filter')?.value || 'all';
+  const data = getCategorizedData();
+  const svg = $('#radar-svg');
+  if (!svg) return;
 
-    // ==================== SUB‑COMPONENTS ====================
-    const RadarChart = ({ skills, size = 320 }) => {
-      const cx = size / 2, cy = size / 2, r = size * 0.38;
-      const n = skills.length;
-      const angleStep = (2 * Math.PI) / n;
-      const getPoint = (i, val) => ({ x: cx + r * (val / 100) * Math.cos(i * angleStep - Math.PI / 2), y: cy + r * (val / 100) * Math.sin(i * angleStep - Math.PI / 2) });
-      const getLabelPoint = (i) => ({ x: cx + (r + 28) * Math.cos(i * angleStep - Math.PI / 2), y: cy + (r + 28) * Math.sin(i * angleStep - Math.PI / 2) });
-      const gridLevels = [0.25, 0.5, 0.75, 1.0];
-      const polygon = skills.map((s, i) => `${getPoint(i, s.value).x},${getPoint(i, s.value).y}`).join(" ");
-      return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: "visible" }}>
-          {gridLevels.map((lvl, idx) => (
-            <polygon key={`grid-${idx}`} points={skills.map((_, i) => `${cx + r * lvl * Math.cos(i * angleStep - Math.PI / 2)},${cy + r * lvl * Math.sin(i * angleStep - Math.PI / 2)}`).join(" ")} fill="none" stroke="var(--g-color-line-generic)" strokeWidth="1" />
-          ))}
-          {skills.map((_, i) => (
-            <line key={`axis-${i}`} x1={cx} y1={cy} x2={cx + r * Math.cos(i * angleStep - Math.PI / 2)} y2={cy + r * Math.sin(i * angleStep - Math.PI / 2)} stroke="var(--g-color-line-generic-hover)" strokeWidth="1" />
-          ))}
-          <polygon points={polygon} fill="var(--g-color-base-brand)" fillOpacity={0.15} stroke="var(--g-color-base-brand)" strokeWidth="2" strokeLinejoin="round" />
-          {skills.map((s, i) => (
-            <circle key={`dot-${i}`} cx={getPoint(i, s.value).x} cy={getPoint(i, s.value).y} r={4} fill="var(--g-color-base-brand)" />
-          ))}
-          {skills.map((s, i) => (
-            <text key={`label-${i}`} x={getLabelPoint(i).x} y={getLabelPoint(i).y} textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="var(--g-color-text-secondary)" fontFamily="sans-serif">{s.label}</text>
-          ))}
-        </svg>
-      );
-    };
+  // Update ontology info banner
+  const vEl = $('#radar-onto-value'), mEl = $('#radar-onto-meta');
+  if (vEl && mEl) {
+    if (ontoFilter === 'all') {
+      vEl.textContent = 'Все компетенции';
+      mEl.textContent = 'Оси диаграммы формируются из ваших навыков';
+    } else {
+      const onto = ontologyDefinitions[ontoFilter];
+      vEl.textContent = onto.label;
+      mEl.textContent = `${onto.axes.length} фиксированных осей · оценка покрытия каждой области по шкале 0–100`;
+    }
+  }
 
-    const QRPlaceholder = ({ size = 120 }) => {
-      const cells = [];
-      const seed = 42;
-      for (let i = 0; i < 21; i++) for (let j = 0; j < 21; j++) {
-        const corner = (i < 7 && j < 7) || (i < 7 && j > 13) || (i > 13 && j < 7);
-        const dark = corner ? ((i === 0 || i === 6 || j === 0 || j === 6 || (i > 1 && i < 5 && j > 1 && j < 5))) : ((i * 13 + j * 7 + seed) % 3 !== 0);
-        if (dark) cells.push({ i, j });
-      }
-      const cell = size / 21;
-      return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <rect width={size} height={size} fill="white" rx="8" />
-          {cells.map(({ i, j }) => <rect key={`${i}-${j}`} x={j * cell + 1} y={i * cell + 1} width={cell - 1} height={cell - 1} fill="var(--g-color-base-background)" />)}
-        </svg>
-      );
-    };
+  // Minimum viable radar: 3 axes. In "all" mode this may not be reached until user adds more skills.
+  // In specific ontology mode we always have 6 fixed axes, so this guard only triggers on "all".
+  if (data.length < 3) {
+    const msg = ontoFilter === 'all'
+      ? `Добавьте больше навыков для визуализации (${data.length}/3)`
+      : 'Нет данных для этой онтологии';
+    svg.innerHTML = `<text x="250" y="250" fill="#8694ab" text-anchor="middle" font-size="14" font-family="Manrope">${msg}</text>`;
+    $('#radar-legend').innerHTML = '';
+    renderProfMatch();
+    updateRecommendations();
+    return;
+  }
 
-    // ===================== STEPS ============================
-    // Шаг 1 – Регистрация
-    const Step1 = ({ onNext }) => {
-      const [method, setMethod] = useState(null);
-      const [loading, setLoading] = useState(false);
+  const cx = 250, cy = 250, R = 180;
+  const n = data.length;
+  const angleFor = (i) => (Math.PI * 2 * i) / n - Math.PI / 2;
 
-      const providers = [
-        { id: "yandex", name: "Яндекс ID", icon: "Я", color: "#FC3F1D" },
-        { id: "google", name: "Google", icon: "G", color: "#4285F4" },
-        { id: "sber", name: "Сбер ID", icon: "С", color: "#21A038" },
-        { id: "tbank", name: "Т-Банк ID", icon: "Т", color: "#FFDD2D", textColor: "#333" },
-        { id: "wallet", name: "Web3 кошелёк", icon: "⬡", color: "var(--g-color-base-brand)", textColor: "#fff" },
-      ];
+  let html = '';
 
-      const handleAuth = (id) => {
-        setMethod(id);
-        setLoading(true);
-        setTimeout(() => { setLoading(false); onNext(); }, 1800);
-      };
+  // grid rings
+  const ringLevels = [0.25, 0.5, 0.75, 1.0];
+  ringLevels.forEach(lvl => {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = angleFor(i);
+      pts.push((cx + Math.cos(a) * R * lvl).toFixed(1) + ',' + (cy + Math.sin(a) * R * lvl).toFixed(1));
+    }
+    html += `<polygon points="${pts.join(' ')}" fill="none" stroke="#e3e9f2" stroke-width="1" stroke-dasharray="${lvl === 1.0 ? '' : '2,3'}" />`;
+  });
 
-      return (
-        <Container maxWidth="s" style={{ margin: "0 auto", paddingTop: spacing(4) }}>
-          <div style={{ textAlign: "center", marginBottom: spacing(6) }}>
-            <div style={{ fontSize: 48, marginBottom: spacing(2) }}>🔐</div>
-            <h2 style={{ color: "var(--g-color-text-primary)", fontSize: 26, fontWeight: 700, margin: 0 }}>Добро пожаловать в SkillPass</h2>
-            <p style={{ color: "var(--g-color-text-secondary)", fontSize: 15, lineHeight: 1.6, margin: 0 }}>
-              Ваш цифровой паспорт компетенций на основе блокчейна. Выберите способ входа.
-            </p>
+  // Ring value labels (25/50/75/100) — only on the vertical axis for clarity
+  ringLevels.forEach(lvl => {
+    const y = cy - R * lvl;
+    html += `<text x="${cx + 4}" y="${y.toFixed(1)}" fill="#8694ab" font-size="9" font-family="JetBrains Mono" dominant-baseline="middle">${Math.round(lvl * 100)}</text>`;
+  });
+
+  // axes
+  for (let i = 0; i < n; i++) {
+    const a = angleFor(i);
+    const x = cx + Math.cos(a) * R;
+    const y = cy + Math.sin(a) * R;
+    html += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e3e9f2" stroke-width="1" />`;
+  }
+
+  // data polygon
+  const hasAnyData = data.some(d => d.value > 0);
+  if (hasAnyData) {
+    const dataPts = [];
+    for (let i = 0; i < n; i++) {
+      const a = angleFor(i);
+      const v = data[i].value / 100;
+      dataPts.push((cx + Math.cos(a) * R * v).toFixed(1) + ',' + (cy + Math.sin(a) * R * v).toFixed(1));
+    }
+    html += `
+      <defs>
+        <radialGradient id="radarGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#2b5fff" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#0095ff" stop-opacity="0.15"/>
+        </radialGradient>
+      </defs>
+      <polygon points="${dataPts.join(' ')}" fill="url(#radarGrad)" stroke="#2b5fff" stroke-width="2" stroke-linejoin="round"/>
+    `;
+
+    // dots — only for non-zero values (gaps stay empty)
+    for (let i = 0; i < n; i++) {
+      if (data[i].value === 0) continue;
+      const a = angleFor(i);
+      const v = data[i].value / 100;
+      const x = cx + Math.cos(a) * R * v;
+      const y = cy + Math.sin(a) * R * v;
+      html += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#2b5fff" stroke="#ffffff" stroke-width="2"/>`;
+    }
+  }
+
+  // labels
+  for (let i = 0; i < n; i++) {
+    const a = angleFor(i);
+    const lx = cx + Math.cos(a) * (R + 28);
+    const ly = cy + Math.sin(a) * (R + 28);
+    const anchor = Math.abs(Math.cos(a)) < 0.3 ? 'middle' : (Math.cos(a) > 0 ? 'start' : 'end');
+    const valColor = data[i].value === 0 ? '#ef4444' : '#4a5670';
+    const valText = data[i].value === 0 ? 'пробел' : data[i].value + '%';
+    html += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" fill="#0f1826" font-size="12" font-weight="600" font-family="Manrope">${escapeHtml(data[i].name)}</text>`;
+    html += `<text x="${lx.toFixed(1)}" y="${(ly + 14).toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" fill="${valColor}" font-size="10" font-family="JetBrains Mono">${valText}</text>`;
+  }
+
+  svg.innerHTML = html;
+
+  // legend
+  $('#radar-legend').innerHTML = data.map((d, i) => `
+    <div class="radar-legend-item">
+      <div class="radar-legend-dot" style="background:${d.value === 0 ? '#e3e9f2' : catColors[i % catColors.length]}"></div>
+      <span style="${d.value === 0 ? 'color:var(--g-text-hint)' : ''}">${escapeHtml(d.name)}</span>
+      <span class="radar-legend-val" style="${d.value === 0 ? 'color:var(--g-danger)' : ''}">${d.value}%</span>
+    </div>
+  `).join('');
+
+  renderProfMatch();
+  updateRecommendations();
+}
+
+function updateRecommendations() {
+  const rec = $('#recommendations');
+  if (!rec) return;
+  const ontoFilter = $('#ontology-filter')?.value || 'all';
+  const data = getCategorizedData();
+
+  if (state.skills.length === 0) {
+    rec.innerHTML = 'Добавьте навыки в разделе <b>«Загрузка компетенций»</b>, чтобы увидеть персональные рекомендации.';
+    return;
+  }
+
+  if (ontoFilter === 'all') {
+    if (data.length === 0) { rec.textContent = 'Нет данных для анализа.'; return; }
+    const weakest = data.reduce((min, d) => d.value < min.value ? d : min, data[0]);
+    const strongest = data.reduce((max, d) => d.value > max.value ? d : max, data[0]);
+    rec.innerHTML = `Ваша самая сильная область — <b>${escapeHtml(strongest.name)}</b> (${strongest.value}%). Стоит усилить <b>${escapeHtml(weakest.name)}</b> (${weakest.value}%) — добавьте профильные навыки или получите сертификат.`;
+    return;
+  }
+
+  const onto = ontologyDefinitions[ontoFilter];
+  const ontoName = onto.label;
+  const gaps = data.filter(d => d.value === 0);
+  const weak = data.filter(d => d.value > 0 && d.value < 50);
+  const strong = data.filter(d => d.value >= 75);
+
+  if (gaps.length === data.length) {
+    rec.innerHTML = `В онтологии <b>${escapeHtml(ontoName)}</b> у вас пока нет ни одного навыка. Попробуйте другую онтологию или добавьте профильные навыки.`;
+  } else if (gaps.length > 0) {
+    const gapNames = gaps.slice(0, 3).map(g => `<b>${escapeHtml(g.name)}</b>`).join(', ');
+    rec.innerHTML = `В онтологии <b>${escapeHtml(ontoName)}</b> не покрыто ${gaps.length} из ${data.length} областей: ${gapNames}. Добавьте соответствующие навыки, чтобы закрыть пробелы.`;
+  } else if (weak.length > 0) {
+    const weakNames = weak.slice(0, 3).map(w => `<b>${escapeHtml(w.name)}</b>`).join(', ');
+    rec.innerHTML = `Все области онтологии <b>${escapeHtml(ontoName)}</b> покрыты — но ${weakNames} требует(ют) усиления.`;
+  } else {
+    rec.innerHTML = `Отличный результат в онтологии <b>${escapeHtml(ontoName)}</b>! ${strong.length} из ${data.length} областей на уровне «Продвинутый» или выше.`;
+  }
+}
+
+function renderProfMatch() {
+  const profFilter = $('#profession-filter')?.value || 'all';
+  const professionRequirements = {
+    backend:  { name: 'Backend-разработчик',   required: ['Python', 'SQL', 'Docker', 'Git', 'Architecture'] },
+    data:     { name: 'Data Analyst',          required: ['Python', 'SQL', 'Pandas', 'Статистика', 'NumPy'] },
+    pm:       { name: 'Project Manager',       required: ['Agile/Scrum', 'Leadership', 'SQL'] },
+    devops:   { name: 'DevOps Engineer',       required: ['Docker', 'AWS', 'Git', 'Cloud'] },
+  };
+
+  let items = Object.entries(professionRequirements);
+  if (profFilter !== 'all') items = items.filter(([k]) => k === profFilter);
+
+  const userSkills = state.skills.map(s => s.name.toLowerCase());
+  const list = $('#prof-match-list');
+
+  list.innerHTML = items.map(([key, p]) => {
+    const have = p.required.filter(r => userSkills.includes(r.toLowerCase())).length;
+    const pct = Math.round((have / p.required.length) * 100);
+    return `
+      <div class="prof-match-item">
+        <div class="prof-match-row">
+          <div class="prof-match-name">${p.name}</div>
+          <div class="prof-match-pct">${pct}%</div>
+        </div>
+        <div class="prof-bar">
+          <div class="prof-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div style="font-size:11px;color:var(--g-text-hint);margin-top:8px;font-family:'JetBrains Mono',monospace">
+          ${have}/${p.required.length} · ${p.required.join(' · ')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ================================================
+// STEP 6: SHARE PROFILE
+// ================================================
+function renderShareSelection() {
+  // Certs
+  const c = $('#share-certs-list');
+  if (state.certs.length === 0) {
+    c.innerHTML = '<div class="empty">Нет сертификатов для шеринга</div>';
+  } else {
+    c.innerHTML = state.certs.map(cert => {
+      const sel = state.shareSelection.certs.has(cert.id);
+      return `
+      <div class="select-row ${sel ? 'selected' : ''}" onclick="toggleShareCert('${cert.id}')">
+        <div class="check-box"></div>
+        <div class="select-label">
+          <div class="select-name">${escapeHtml(cert.name)}</div>
+          <div class="select-sub">${escapeHtml(cert.issuer)} · ${cert.verified ? '✓ верифицирован' : '⏳ проверка'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Skills
+  const s = $('#share-skills-list');
+  if (state.skills.length === 0) {
+    s.innerHTML = '<div class="empty">Нет навыков для шеринга</div>';
+  } else {
+    s.innerHTML = state.skills.map(sk => {
+      const sel = state.shareSelection.skills.has(sk.id);
+      return `
+      <div class="select-row ${sel ? 'selected' : ''}" onclick="toggleShareSkill('${sk.id}')">
+        <div class="check-box"></div>
+        <div class="select-label">
+          <div class="select-name">${escapeHtml(sk.name)}</div>
+          <div class="select-sub">Уровень: ${escapeHtml(sk.level)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function toggleShareCert(id) {
+  if (state.shareSelection.certs.has(id)) state.shareSelection.certs.delete(id);
+  else state.shareSelection.certs.add(id);
+  renderShareSelection();
+}
+function toggleShareSkill(id) {
+  if (state.shareSelection.skills.has(id)) state.shareSelection.skills.delete(id);
+  else state.shareSelection.skills.add(id);
+  renderShareSelection();
+}
+function toggleExpiry(el) { el.classList.toggle('selected'); state.shareSelection.expiry = el.classList.contains('selected'); }
+function toggleNotify(el) { el.classList.toggle('selected'); state.shareSelection.notify = el.classList.contains('selected'); }
+
+function selectAllShare() {
+  state.certs.forEach(c => state.shareSelection.certs.add(c.id));
+  state.skills.forEach(s => state.shareSelection.skills.add(s.id));
+  renderShareSelection();
+  toast('Выбрано всё', 'Все сертификаты и навыки включены', 'info');
+}
+
+function switchShareTab(tab) {
+  $$('.share-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  $('#share-qr-view').style.display = tab === 'qr' ? 'block' : 'none';
+  $('#share-link-view').style.display = tab === 'link' ? 'block' : 'none';
+}
+
+function generateProfile() {
+  const totalSelected = state.shareSelection.certs.size + state.shareSelection.skills.size;
+  if (totalSelected === 0) {
+    toast('Ничего не выбрано', 'Выберите хотя бы один сертификат или навык', 'error');
+    return;
+  }
+
+  // Generate unique profile ID
+  const profileId = 'sc' + Math.random().toString(36).slice(2, 10);
+  const link = `https://skillchain.io/p/${profileId}`;
+  $('#public-link').textContent = link;
+
+  // Generate QR
+  const qrDiv = $('#qr-canvas');
+  qrDiv.innerHTML = '';
+  new QRCode(qrDiv, {
+    text: link,
+    width: 220, height: 220,
+    colorDark: '#0f1826',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+
+  // Fake tx hash
+  const hash = '0x' + Math.random().toString(16).slice(2, 14);
+  $('#share-tx-hash').textContent = hash.slice(0, 12) + '…';
+
+  // Record transaction
+  addTx('profile_shared', `Публикация профиля (${totalSelected} элементов)`, 'success');
+  state.sharedProfiles = (state.sharedProfiles || 0) + 1;
+
+  // Add "fake" employer access
+  if (state.employers.length < 3) {
+    const nextIdx = state.employers.length;
+    if (demoEmployers[nextIdx]) {
+      state.employers.push({ ...demoEmployers[nextIdx], grantedAt: new Date().toISOString() });
+    }
+  }
+
+  $('#generate-btn').textContent = '✓ Профиль обновлён';
+  toast('Профиль сгенерирован', 'Ссылка и QR-код готовы', 'success');
+  updateDashMetrics();
+}
+
+function copyLink() {
+  const link = $('#public-link').textContent;
+  if (!link || link.includes('...')) { toast('Сначала сгенерируйте', '', 'error'); return; }
+  navigator.clipboard?.writeText(link).then(() => {
+    toast('Скопировано', 'Ссылка в буфере обмена', 'success');
+  }).catch(() => toast('Ошибка', 'Не удалось скопировать', 'error'));
+}
+
+// ================================================
+// STEP 7: MANAGEMENT
+// ================================================
+function addTx(type, description, status = 'success') {
+  state.transactions.unshift({
+    id: 'tx_' + Date.now() + Math.random(),
+    type, description, status,
+    hash: '0x' + Math.random().toString(16).slice(2, 10) + '...' + Math.random().toString(16).slice(2, 6),
+    timestamp: new Date().toISOString(),
+    blockNumber: 18_450_000 + state.transactions.length,
+  });
+}
+
+function renderManageHistory() {
+  const list = $('#tx-list');
+  if (state.transactions.length === 0) {
+    list.innerHTML = '<div class="empty">История пока пуста</div>';
+    return;
+  }
+  list.innerHTML = state.transactions.map(tx => {
+    const badge = { success: 'подтверждена', revoked: 'отозвана', pending: 'в обработке' }[tx.status];
+    return `
+      <div class="tx-row">
+        <div class="tx-status-dot ${tx.status}"></div>
+        <div class="tx-main">
+          <div class="tx-title">${escapeHtml(tx.description)}</div>
+          <div class="tx-sub">
+            <span class="tx-hash">${tx.hash}</span>
+            <span>Блок #${tx.blockNumber}</span>
           </div>
+        </div>
+        <div class="tx-time">${new Date(tx.timestamp).toLocaleString('ru-RU', { day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit' })}</div>
+        <div class="tx-badge ${tx.status}">${badge}</div>
+      </div>
+    `;
+  }).join('');
+}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {providers.map(p => (
-              <button key={p.id} onClick={() => handleAuth(p.id)} disabled={loading}
-                style={{
-                  display: "flex", alignItems: "center", gap: 14,
-                  background: method === p.id ? "var(--g-color-base-brand-light)" : "var(--g-color-base-generic)",
-                  border: `1px solid ${method === p.id ? "var(--g-color-base-brand)" : "var(--g-color-line-generic)"}`,
-                  borderRadius: 12, padding: "14px 18px", cursor: "pointer",
-                  color: "var(--g-color-text-primary)", fontFamily: "inherit", fontSize: 15,
-                  transition: "all 0.2s", opacity: loading && method !== p.id ? 0.5 : 1,
-                }}>
-                <div style={{
-                  width: 38, height: 38, borderRadius: 10, background: p.color,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: p.id === "wallet" ? 20 : 16, fontWeight: 700,
-                  color: p.textColor || "#fff", flexShrink: 0,
-                }}>{p.icon}</div>
-                <span style={{ fontWeight: 500 }}>{p.name}</span>
-                {loading && method === p.id && <Spin size="s" style={{ marginLeft: "auto" }} />}
-                {!loading && <span style={{ marginLeft: "auto", color: "var(--g-color-text-hint)" }}>→</span>}
-              </button>
-            ))}
+function renderAccessList() {
+  const list = $('#access-list');
+  if (state.employers.length === 0) {
+    list.innerHTML = '<div class="empty">Пока никто не имеет доступа к вашему профилю.<br>Сгенерируйте профиль в шаге 05, чтобы поделиться.</div>';
+    return;
+  }
+  list.innerHTML = state.employers.map((e, idx) => `
+    <div class="access-row">
+      <div class="access-logo" style="background:${e.color};color:${e.textColor || 'white'}">${e.logo}</div>
+      <div>
+        <div class="access-info-name">${escapeHtml(e.name)}</div>
+        <div class="access-info-sub">Доступ: ${e.access}</div>
+        <div class="access-info-sub-row">
+          <span class="access-info-tag">${e.certs} сертификатов</span>
+          <span class="access-info-tag">${e.skills} навыков</span>
+          <span class="access-info-tag">${e.opens} ${plural(e.opens, ['просмотр', 'просмотра', 'просмотров'])}</span>
+        </div>
+      </div>
+      <button class="btn btn-danger" onclick="openRevoke(${idx})">🚫 Отозвать</button>
+    </div>
+  `).join('');
+}
+
+function renderCertsStatus() {
+  const list = $('#status-certs-list');
+  if (state.certs.length === 0) {
+    list.innerHTML = '<div class="empty">Нет сертификатов</div>';
+    return;
+  }
+  list.innerHTML = state.certs.map(c => {
+    const isActive = !c.revoked && (!c.expiry || new Date(c.expiry) > new Date());
+    const status = c.revoked ? 'revoked' : (isActive ? 'success' : 'revoked');
+    const badge = c.revoked ? 'отозван' : (isActive ? 'активен' : 'истёк');
+    const expiryText = c.expiry ? `действителен до ${new Date(c.expiry).toLocaleDateString('ru-RU')}` : 'бессрочно';
+    return `
+      <div class="tx-row">
+        <div class="tx-status-dot ${status}"></div>
+        <div class="tx-main">
+          <div class="tx-title">${escapeHtml(c.name)}</div>
+          <div class="tx-sub">
+            <span>Эмитент: ${escapeHtml(c.issuer)}</span>
+            <span class="tx-hash">${c.txHash || '0x...'}</span>
           </div>
+        </div>
+        <div class="tx-time">${expiryText}</div>
+        <div class="tx-badge ${status}">${badge}</div>
+      </div>
+    `;
+  }).join('');
+}
 
-          <p style={{ textAlign: "center", color: "var(--g-color-text-hint)", fontSize: 12, marginTop: 24 }}>
-            Нажимая «Войти», вы принимаете <span style={{ color: "var(--g-color-base-brand)" }}>условия использования</span> и <span style={{ color: "var(--g-color-base-brand)" }}>политику конфиденциальности</span>
-          </p>
-        </Container>
-      );
-    };
+function switchManageTab(tab) {
+  $$('.tab-bar-btn').forEach(b => b.classList.toggle('active', b.dataset.mtab === tab));
+  $('#manage-history').style.display = tab === 'history' ? 'block' : 'none';
+  $('#manage-access').style.display = tab === 'access' ? 'block' : 'none';
+  $('#manage-certs').style.display = tab === 'certs' ? 'block' : 'none';
+  if (tab === 'access') renderAccessList();
+  if (tab === 'certs') renderCertsStatus();
+  if (tab === 'history') renderManageHistory();
+}
 
-    // Шаг 2 – Кабинет
-    const Step2 = ({ onGoTo }) => {
-      const tiles = [
-        { id: 3, icon: "📋", title: "Управлять компетенциями", sub: "Дипломы, сертификаты, навыки", color: "var(--g-color-base-brand)" },
-        { id: 4, icon: "🕸️", title: "Профиль компетенций", sub: "Визуализация навыков", color: "var(--g-color-base-positive)" },
-        { id: 5, icon: "🔗", title: "Профиль для работодателя", sub: "QR-код и ссылка", color: "var(--g-color-base-warning)" },
-        { id: 6, icon: "🔒", title: "Управление доступом", sub: "Блокчейн-транзакции", color: "var(--g-color-base-danger)" },
-      ];
+// Revoke
+function openRevoke(idx) {
+  state.revokeTarget = idx;
+  const e = state.employers[idx];
+  $('#revoke-desc').textContent = `Вы уверены, что хотите отозвать доступ у «${e.name}»? Действие будет записано в блокчейн и не может быть отменено.`;
+  $('#revoke-modal').classList.add('open');
+}
+function closeModal() { $('#revoke-modal').classList.remove('open'); state.revokeTarget = null; }
+function confirmRevoke() {
+  if (state.revokeTarget === null) return;
+  const e = state.employers[state.revokeTarget];
+  addTx('access_revoked', `Отозван доступ у ${e.name}`, 'revoked');
+  state.employers.splice(state.revokeTarget, 1);
+  closeModal();
+  renderAccessList();
+  renderManageHistory();
+  updateDashMetrics();
+  toast('Доступ отозван', `${e.name} больше не видит ваш профиль`, 'success');
+}
 
-      return (
-        <Container maxWidth="m" style={{ margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: spacing(6) }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--g-color-base-brand-light)", border: `2px solid var(--g-color-base-brand)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
-            <div>
-              <div style={{ color: "var(--g-color-text-primary)", fontWeight: 600, fontSize: 18 }}>Алексей Громов</div>
-              <div style={{ color: "var(--g-color-text-secondary)", fontSize: 13 }}>alexey.gromov@yandex.ru · DID: did:web3:0x4f2a...7c1b</div>
-            </div>
-            <div style={{ marginLeft: "auto" }}>
-              <Label theme="success" size="m">✓ Верифицирован</Label>
-            </div>
-          </div>
+function exportData() {
+  const data = {
+    user: state.user,
+    certs: state.certs,
+    skills: state.skills,
+    transactions: state.transactions,
+    employers: state.employers,
+    exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'skillchain-export-' + Date.now() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Экспорт готов', 'JSON-файл загружен', 'success');
+}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
-            {tiles.map(t => (
-              <Card key={t.id} onClick={() => onGoTo(t.id)} style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}>
-                <div style={{ position: "absolute", top: -20, right: -20, fontSize: 72, opacity: 0.05 }}>{t.icon}</div>
-                <div style={{ fontSize: 28, marginBottom: 10 }}>{t.icon}</div>
-                <div style={{ color: "var(--g-color-text-primary)", fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{t.title}</div>
-                <div style={{ color: "var(--g-color-text-secondary)", fontSize: 13 }}>{t.sub}</div>
-                <div style={{ marginTop: 14, width: 32, height: 2, background: t.color, borderRadius: 2 }} />
-              </Card>
-            ))}
-          </div>
+// Close modal on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'revoke-modal') closeModal();
+});
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-            {[
-              { label: "Сертификатов", val: "4", color: "var(--g-color-base-brand)" },
-              { label: "Навыков", val: "8", color: "var(--g-color-base-positive)" },
-              { label: "Запросов от HR", val: "3", color: "var(--g-color-base-warning)" },
-            ].map(m => (
-              <Card key={m.label}>
-                <div style={{ fontSize: 24, fontWeight: 700, color: m.color }}>{m.val}</div>
-                <div style={{ fontSize: 12, color: "var(--g-color-text-secondary)", marginTop: 2 }}>{m.label}</div>
-              </Card>
-            ))}
-          </div>
-        </Container>
-      );
-    };
-
-    // Шаг 3 – Загрузка компетенций
-    const Step3 = ({ onNext }) => {
-      const [certs, setCerts] = useState(CERTS_DATA.slice(0, 2));
-      const [dragging, setDragging] = useState(false);
-      const [skillInput, setSkillInput] = useState("");
-      const [skills, setSkills] = useState(["Python", "Machine Learning", "SQL"]);
-      const [uploading, setUploading] = useState(false);
-      const [uploaded, setUploaded] = useState(false);
-
-      const handleAddSkill = () => {
-        if (skillInput.trim() && !skills.includes(skillInput.trim())) {
-          setSkills([...skills, skillInput.trim()]);
-          setSkillInput("");
-        }
-      };
-
-      const handleUpload = () => {
-        setUploading(true);
-        setTimeout(() => { setUploading(false); setUploaded(true); setTimeout(onNext, 1000); }, 2000);
-      };
-
-      return (
-        <Container maxWidth="m" style={{ margin: "0 auto" }}>
-          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Загрузка компетенций</h3>
-          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 24 }}>Добавьте сертификаты, дипломы и укажите навыки</p>
-
-          <div
-            onDragOver={e => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={e => { e.preventDefault(); setDragging(false); }}
-            style={{
-              border: `2px dashed ${dragging ? "var(--g-color-base-brand)" : "var(--g-color-line-generic)"}`,
-              borderRadius: 14, padding: "30px 20px", textAlign: "center",
-              background: dragging ? "var(--g-color-base-brand-light)" : "var(--g-color-base-generic)",
-              cursor: "pointer", marginBottom: 20, transition: "all 0.2s",
-            }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>📤</div>
-            <div style={{ color: "var(--g-color-text-primary)", fontWeight: 500, marginBottom: 4 }}>Перетащите файлы или нажмите для выбора</div>
-            <div style={{ color: "var(--g-color-text-secondary)", fontSize: 13 }}>PDF, JPEG, PNG · Сертификаты, дипломы, бейджи</div>
-            <Button view="flat" size="s" style={{ marginTop: 14 }}>Выбрать файлы</Button>
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Добавленные документы</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {CERTS_DATA.map(c => (
-                <Card key={c.id}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 22 }}>{c.badge}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 500 }}>{c.name}</div>
-                      <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12 }}>{c.issuer} · {c.date}</div>
-                    </div>
-                    <Label theme={c.status === "active" ? "success" : "danger"}>{c.status === "active" ? "Активен" : "Отозван"}</Label>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Навыки</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-              {skills.map(s => (
-                <Label key={s} theme="info" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {s}
-                  <Icon data={Xmark} size={12} style={{ cursor: "pointer", opacity: 0.6 }} onClick={() => setSkills(skills.filter(x => x !== s))} />
-                </Label>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <TextInput value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddSkill()} placeholder="Добавить навык..." style={{ flex: 1 }} />
-              <Button view="outlined" onClick={handleAddSkill}><Icon data={Plus} /></Button>
-            </div>
-          </div>
-
-          <Button view="action" size="l" onClick={handleUpload} disabled={uploading || uploaded} width="max">
-            {uploaded ? <><Icon data={CircleCheck} /> Сохранено</> : uploading ? <><Spin size="s" /> Сохранение...</> : "Сохранить компетенции →"}
-          </Button>
-        </Container>
-      );
-    };
-
-    // Шаг 4 – Профиль компетенций
-    const Step4 = ({ onNext }) => {
-      const [ontology, setOntology] = useState(ONTOLOGIES[0]);
-      const [profession, setProfession] = useState("");
-
-      const filtered = profession
-        ? SKILLS_DATA.filter(s => {
-          if (profession === "Data Scientist") return ["Программирование", "AI/ML", "Данные"].includes(s.category);
-          if (profession === "Backend Developer") return ["Программирование", "DevOps", "Данные"].includes(s.category);
-          return true;
-        })
-        : SKILLS_DATA;
-
-      const categories = [...new Set(SKILLS_DATA.map(s => s.category))];
-      const catColors = { "Программирование": "var(--g-color-base-brand)", "AI/ML": "var(--g-color-base-positive)", "Данные": "var(--g-color-base-warning)", "Фронтенд": "#C678DD", "DevOps": "var(--g-color-base-misc)", "Soft Skills": "var(--g-color-base-danger)" };
-
-      return (
-        <Container maxWidth="m" style={{ margin: "0 auto" }}>
-          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Профиль компетенций</h3>
-          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 20 }}>Визуализация ваших навыков на основе онтологий</p>
-
-          <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label style={{ color: "var(--g-color-text-secondary)", fontSize: 12, display: "block", marginBottom: 6 }}>Онтология</label>
-              <Select value={[ontology]} onUpdate={(vals) => setOntology(vals[0])} options={ONTOLOGIES.map(o => ({ value: o, content: o }))} />
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label style={{ color: "var(--g-color-text-secondary)", fontSize: 12, display: "block", marginBottom: 6 }}>Фильтр по профессии</label>
-              <Select value={profession ? [profession] : []} onUpdate={(vals) => setProfession(vals[0] || "")} options={[{ value: "", content: "Все профессии" }, ...PROFESSIONS.map(p => ({ value: p, content: p }))]} />
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
-            <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 10px" }}>
-              <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, marginBottom: 12, letterSpacing: 1 }}>ПАУТИНА НАВЫКОВ</div>
-              <RadarChart skills={filtered} size={260} />
-            </Card>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filtered.map(s => (
-                <Card key={s.id} style={{ padding: "12px 14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-                    <span style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 500 }}>{s.label}</span>
-                    <span style={{ color: catColors[s.category], fontSize: 12, fontWeight: 600 }}>{s.value}%</span>
-                  </div>
-                  <div style={{ height: 5, background: "var(--g-color-base-generic)", borderRadius: 4 }}>
-                    <div style={{ height: "100%", width: `${s.value}%`, background: catColors[s.category], borderRadius: 4, transition: "width 0.5s" }} />
-                  </div>
-                  <span style={{ color: "var(--g-color-text-hint)", fontSize: 11, marginTop: 4, display: "block" }}>{s.category}</span>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-            {categories.map(c => (
-              <span key={c} style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--g-color-text-secondary)", fontSize: 12 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: catColors[c], display: "inline-block" }} />{c}
-              </span>
-            ))}
-          </div>
-
-          <Button view="action" size="l" onClick={onNext} width="max" style={{ marginTop: 24 }}>
-            Создать профиль для работодателя →
-          </Button>
-        </Container>
-      );
-    };
-
-    // Шаг 5 – Профиль для работодателя
-    const Step5 = ({ onNext }) => {
-      const [selected, setSelected] = useState({ certs: [1, 2], skills: [1, 2, 3, 7] });
-      const [generated, setGenerated] = useState(false);
-      const [link] = useState("https://skillpass.ru/p/alexey-gromov-xK9mP2");
-
-      const toggle = (type, id) => {
-        setGenerated(false);
-        setSelected(prev => ({
-          ...prev,
-          [type]: prev[type].includes(id) ? prev[type].filter(x => x !== id) : [...prev[type], id],
-        }));
-      };
-
-      return (
-        <Container maxWidth="m" style={{ margin: "0 auto" }}>
-          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Профиль для работодателя</h3>
-          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 24 }}>Выберите данные, которые хотите показать, и получите ссылку или QR-код</p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-            {[1, 2].map(section => (
-              <div key={section === 1 ? "certs" : "skills"}>
-                <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>{section === 1 ? "Сертификаты" : "Навыки"}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {(section === 1 ? CERTS_DATA.filter(c => c.status === "active") : SKILLS_DATA).map(item => (
-                    <Card key={item.id} onClick={() => toggle(section === 1 ? "certs" : "skills", item.id)} style={{ cursor: "pointer" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: section === 1 ? 20 : 14 }}>{section === 1 ? item.badge : "✨"}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ color: "var(--g-color-text-primary)", fontSize: 13, fontWeight: 500 }}>{section === 1 ? item.name : item.label}</div>
-                          <div style={{ color: "var(--g-color-text-secondary)", fontSize: 11 }}>{section === 1 ? item.issuer : `${item.category} · ${item.value}%`}</div>
-                        </div>
-                        <div style={{
-                          width: 18, height: 18, borderRadius: "50%",
-                          background: selected[section === 1 ? "certs" : "skills"].includes(item.id) ? "var(--g-color-base-brand)" : "transparent",
-                          border: `2px solid ${selected[section === 1 ? "certs" : "skills"].includes(item.id) ? "var(--g-color-base-brand)" : "var(--g-color-line-generic)"}`,
-                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff",
-                        }}>{selected[section === 1 ? "certs" : "skills"].includes(item.id) ? "✓" : ""}</div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Button view="action" size="l" onClick={() => setGenerated(true)} width="max" style={{ marginBottom: 20 }}>
-            ✨ Сгенерировать ссылку и QR-код
-          </Button>
-
-          {generated && (
-            <Card>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center" }}>
-                <div>
-                  <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, marginBottom: 8 }}>Ваша персональная ссылка</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--g-color-base-generic)", borderRadius: 8, padding: "10px 12px", border: "1px solid var(--g-color-line-generic)" }}>
-                    <span style={{ color: "var(--g-color-base-brand)", fontSize: 13, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link}</span>
-                    <Button view="flat" size="s">Копировать</Button>
-                  </div>
-                  <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    <div style={{ color: "var(--g-color-text-hint)", fontSize: 12, width: "100%", marginBottom: 4 }}>Включено:</div>
-                    {selected.certs.map(id => CERTS_DATA.find(c => c.id === id)).filter(Boolean).map(c => (
-                      <Label key={c.id} theme="brand">{c.badge} {c.issuer}</Label>
-                    ))}
-                    {selected.skills.map(id => SKILLS_DATA.find(s => s.id === id)).filter(Boolean).map(s => (
-                      <Label key={s.id} theme="success">{s.label}</Label>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <QRPlaceholder size={110} />
-                  <div style={{ color: "var(--g-color-text-hint)", fontSize: 11, marginTop: 6 }}>QR-код</div>
-                </div>
-              </div>
-              <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--g-color-base-positive-light)", borderRadius: 10, border: "1px solid var(--g-color-base-positive)" }}>
-                <div style={{ color: "var(--g-color-base-positive)", fontSize: 13, fontWeight: 500 }}>🔒 Данные защищены блокчейном</div>
-                <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12, marginTop: 3 }}>Работодатель увидит только выбранные вами данные. Вы можете отозвать доступ в любой момент.</div>
-              </div>
-            </Card>
-          )}
-
-          <Button view="outlined" size="l" onClick={onNext} width="max" style={{ marginTop: 16 }}>
-            Управление доступом и отзыв →
-          </Button>
-        </Container>
-      );
-    };
-
-    // Шаг 6 – Управление и блокчейн
-    const Step6 = () => {
-      const [tab, setTab] = useState("tx");
-      const [revoking, setRevoking] = useState(null);
-
-      const handleRevoke = (name) => {
-        setRevoking(name);
-        setTimeout(() => setRevoking(null), 1500);
-      };
-
-      const txColor = (type) => {
-        if (type === "credential_issued") return "var(--g-color-base-positive)";
-        if (type === "access_granted") return "var(--g-color-base-brand)";
-        if (type === "access_revoked") return "var(--g-color-base-danger)";
-        if (type === "credential_revoked") return "var(--g-color-base-warning)";
-        return "var(--g-color-text-hint)";
-      };
-
-      const txIcon = (type) => {
-        if (type === "credential_issued") return "🎓";
-        if (type === "access_granted") return "🔓";
-        if (type === "access_revoked") return "🚫";
-        if (type === "credential_revoked") return "⚠️";
-        return "📋";
-      };
-
-      return (
-        <Container maxWidth="m" style={{ margin: "0 auto" }}>
-          <h3 style={{ color: "var(--g-color-text-primary)", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Управление и отзыв</h3>
-          <p style={{ color: "var(--g-color-text-secondary)", fontSize: 14, marginBottom: 20 }}>История блокчейн-транзакций, доступ работодателей и статус сертификатов</p>
-
-          <Tabs activeTab={tab} onSelectTab={(id) => setTab(id)} style={{ marginBottom: 24 }}>
-            <TabsItem id="tx" title="📊 Транзакции" />
-            <TabsItem id="employers" title="🏢 Работодатели" />
-            <TabsItem id="certs" title="🎓 Сертификаты" />
-          </Tabs>
-
-          {tab === "tx" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {TX_DATA.map(tx => (
-                <Card key={tx.id}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 22 }}>{txIcon(tx.type)}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 500 }}>{tx.action}</div>
-                        <Label theme={tx.status === "confirmed" ? "success" : "warning"}>{tx.status === "confirmed" ? "✓" : "..."}</Label>
-                      </div>
-                      <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12, marginTop: 2 }}>{tx.entity} · {tx.date}</div>
-                      <div style={{ color: "var(--g-color-text-hint)", fontSize: 11, fontFamily: "monospace", marginTop: 3 }}>{tx.id}</div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {tab === "employers" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {EMPLOYERS.map(e => (
-                <Card key={e.name}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 8, background: "var(--g-color-base-generic)", border: "1px solid var(--g-color-line-generic)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏢</div>
-                        <div>
-                          <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 600 }}>{e.name}</div>
-                          <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12 }}>С {e.since}</div>
-                        </div>
-                        <Label theme={e.status === "active" ? "success" : "danger"}>{e.status === "active" ? "Активен" : "Отозван"}</Label>
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {e.access.map(a => <Label key={a} theme="brand">{a}</Label>)}
-                      </div>
-                    </div>
-                    {e.status === "active" && (
-                      <Button view="outlined-danger" size="s" onClick={() => handleRevoke(e.name)} disabled={revoking === e.name}>
-                        {revoking === e.name ? <Spin size="xs" /> : "Отозвать"}
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {tab === "certs" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {CERTS_DATA.map(c => (
-                <Card key={c.id}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 28 }}>{c.badge}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ color: "var(--g-color-text-primary)", fontSize: 14, fontWeight: 600 }}>{c.name}</div>
-                      <div style={{ color: "var(--g-color-text-secondary)", fontSize: 12, marginTop: 2 }}>Выдан: {c.issuer} · {c.date}</div>
-                      <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
-                        <Label theme={c.status === "active" ? "success" : "danger"}>{c.status === "active" ? "✓ Активен" : "✗ Отозван"}</Label>
-                        <span style={{ color: "var(--g-color-text-hint)", fontSize: 12 }}>До: {c.expires}</span>
-                        {new Date(c.expires) < new Date() && c.status === "active" && (
-                          <Label theme="warning">⚠ Истёк</Label>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Container>
-      );
-    };
-
-    // ===================== MAIN APP =========================
-    const App = () => {
-      const [step, setStep] = useState(1);
-      const [animIn, setAnimIn] = useState(true);
-      const contentRef = useRef(null);
-
-      const goTo = (s) => {
-        setAnimIn(false);
-        setTimeout(() => {
-          setStep(s);
-          setAnimIn(true);
-          if (contentRef.current) contentRef.current.scrollTop = 0;
-        }, 200);
-      };
-
-      const navItems = step >= 2 ? [
-        { id: 2, label: "Кабинет", icon: "⊡" },
-        { id: 3, label: "Компетенции", icon: "📋" },
-        { id: 4, label: "Профиль", icon: "🕸" },
-        { id: 5, label: "Для HR", icon: "🔗" },
-        { id: 6, label: "Доступы", icon: "🔒" },
-      ] : [];
-
-      return (
-        <ThemeProvider theme="dark">
-          <div style={{ minHeight: "100vh", background: "var(--g-color-base-background)", fontFamily: "'SF Pro Display', 'Segoe UI', system-ui, sans-serif", color: "var(--g-color-text-primary)" }}>
-            {/* Header */}
-            <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(13,17,25,0.88)", backdropFilter: "blur(16px)", borderBottom: "1px solid var(--g-color-line-generic)" }}>
-              <Container maxWidth="l" style={{ padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 58 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--g-color-base-brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff" }}>⬡</div>
-                  <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: -0.3 }}>SkillPass</span>
-                  <Label theme="brand">MVP</Label>
-                </div>
-
-                {step >= 2 && (
-                  <Tabs activeTab={String(step)} onSelectTab={(id) => goTo(Number(id))} size="s">
-                    {navItems.map(n => (
-                      <TabsItem key={n.id} id={String(n.id)} title={<span>{n.icon} {n.label}</span>} />
-                    ))}
-                  </Tabs>
-                )}
-
-                {step >= 2 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--g-color-base-brand-light)", border: "1.5px solid var(--g-color-base-brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>А</div>
-                    <span style={{ fontSize: 13, color: "var(--g-color-text-secondary)" }}>Алексей</span>
-                  </div>
-                )}
-              </Container>
-            </div>
-
-            {/* Content */}
-            <div ref={contentRef} style={{ padding: "32px 20px 60px", maxWidth: 900, margin: "0 auto" }}>
-              <div className={animIn ? "fade-in" : ""} style={{ opacity: animIn ? 1 : 0, transition: "opacity 0.2s" }}>
-                {step === 1 && <Step1 onNext={() => goTo(2)} />}
-                {step === 2 && <Step2 onGoTo={goTo} />}
-                {step === 3 && <Step3 onNext={() => goTo(4)} />}
-                {step === 4 && <Step4 onNext={() => goTo(5)} />}
-                {step === 5 && <Step5 onNext={() => goTo(6)} />}
-                {step === 6 && <Step6 />}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ borderTop: "1px solid var(--g-color-line-generic)", padding: "16px 20px", textAlign: "center" }}>
-              <span style={{ color: "var(--g-color-text-hint)", fontSize: 12 }}>SkillPass · Цифровой паспорт компетенций · Powered by Blockchain · 2025</span>
-            </div>
-          </div>
-        </ThemeProvider>
-      );
-    };
-
-    const root = createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+// ================================================
+// INITIAL RENDERS
+// ================================================
+renderCerts();
+renderSkills();
+updateSummary();
+</script>
 </body>
 </html>
